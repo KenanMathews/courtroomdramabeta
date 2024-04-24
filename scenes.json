@@ -1,0 +1,36 @@
+[
+    {
+      "name": "courtroom",
+      "backgroundPath": "/assets/bg/bg1006 (Courtroom).png",
+      "spritesData": [],
+      "objectsData": []
+    },
+    {
+      "name": "witness",
+      "backgroundPath": "/assets/bg/bg1005 (Witness).png",
+      "spritesData": [],
+      "objectsData": []
+    },
+    {
+      "name": "prosecution",
+      "backgroundPath": "/assets/bg/bg1004 (Prosecution).png",
+      "spritesData": [
+        {
+          "characterKey": "milesedgeworth",
+          "animationKey": "milesnormal"
+        }
+      ],
+      "objectsData": []
+    },
+    {
+      "name": "defence",
+      "backgroundPath": "/assets/bg/bg1003 (Defense).png",
+      "spritesData": [
+        {
+          "characterKey": "phoenixwright",
+          "animationKey": "phoenixnormal"
+        }
+      ],
+      "objectsData": []
+    }
+  ]

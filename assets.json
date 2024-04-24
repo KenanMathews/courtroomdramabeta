@@ -1,0 +1,196 @@
+{
+    "character-phoenixwright": {
+        "characterName":"Phoenix Wright",
+        "imageSrc": "/assets/anim/pw/pl10030a-00.png",
+        "side": "defence",
+        "spriteWidth": 960,
+        "spriteHeight": 720,
+        "spriteX": 180,
+        "spriteY": 8,
+        "animations": {
+            "normal": "animation-phoenixnormal",
+            "pointing": "animation-phoenixpointing",
+            "thinking": "animation-phoenixthinking",
+            "document": "animation-phoenixdocument",
+            "shocked": "animation-phoenixshocked",
+            "objection": "animation-phoenixobjection"
+        }
+    },
+    "character-milesedgeworth": {
+        "characterName":"Miles Edgeworth",
+        "imageSrc": "/assets/anim/me/pl105301-00.png",
+        "side": "prosecution",
+        "spriteWidth": 960,
+        "spriteHeight": 720,
+        "spriteX": 180,
+        "spriteY": 75,
+        "animations": {
+            "normal": "animation-milesnormal",
+            "pointing": "animation-milespointing",
+            "damage": "animation-milesdamage",
+            "grinning": "animation-milesgrinning",
+            "objection": "animation-milesslamming",
+            "confident": "animation-milesconfident"
+        }
+    },
+    "character-phoenixwright-pointing": {
+        "imageSrc": "/assets/anim/pw/pl10030a-00.png",
+        "spriteWidth": 960,
+        "spriteHeight": 720,
+        "spriteX": 180,
+        "spriteY": 8, 
+        "animationKey": "animation-phoenixpointing"
+    },
+    "animation-phoenixpointing": {
+        "imageQueue": [
+            "/assets/anim/pw/pl10030a-00.png",
+            "/assets/anim/pw/pl10030a-01.png",
+            "/assets/anim/pw/pl10030a-02.png",
+            "/assets/anim/pw/pl10030a-03.png",
+            "/assets/anim/pw/pl10030a-04.png",
+            "/assets/anim/pw/pl10030a-05.png"
+        ],
+        "frameDuration": 100,
+        "loopFlag": false
+    },
+    "animation-phoenixnormal": {
+        "imageQueue": [
+            "/assets/anim/pw/pl100301-00.png",
+            "/assets/anim/pw/pl100301-01.png",
+            "/assets/anim/pw/pl100301-02.png",
+            "/assets/anim/pw/pl100301-03.png",
+            "/assets/anim/pw/pl100301-04.png"
+        ],
+        "frameDuration": 100,
+        "loopFlag": true
+    },
+    "animation-phoenixthinking": {
+        "imageQueue": [
+            "/assets/anim/pw/pl100302-00.png",
+            "/assets/anim/pw/pl100302-01.png",
+            "/assets/anim/pw/pl100302-02.png",
+            "/assets/anim/pw/pl100302-03.png",
+            "/assets/anim/pw/pl100302-04.png",
+            "/assets/anim/pw/pl100302-05.png",
+            "/assets/anim/pw/pl100302-06.png"
+        ],
+        "frameDuration": 100,
+        "loopFlag": true
+    },
+    "animation-phoenixdocument": {
+        "imageQueue": [
+            "/assets/anim/pw/pl10030b-00.png",
+            "/assets/anim/pw/pl10030b-01.png",
+            "/assets/anim/pw/pl10030b-02.png",
+            "/assets/anim/pw/pl10030b-03.png",
+            "/assets/anim/pw/pl10030b-04.png",
+            "/assets/anim/pw/pl10030b-05.png",
+            "/assets/anim/pw/pl10030b-06.png",
+            "/assets/anim/pw/pl10030b-07.png"
+        ],
+        "frameDuration": 100,
+        "loopFlag": true
+    },
+    "animation-phoenixshocked": {
+        "imageQueue": [
+            "/assets/anim/pw/pl10030f-00.png",
+            "/assets/anim/pw/pl10030f-01.png",
+            "/assets/anim/pw/pl10030f-02.png",
+            "/assets/anim/pw/pl10030f-03.png",
+            "/assets/anim/pw/pl10030f-04.png",
+            "/assets/anim/pw/pl10030f-05.png",
+            "/assets/anim/pw/pl10030f-06.png"
+        ],
+        "frameDuration": 100,
+        "loopFlag": false
+    },
+    "animation-phoenixobjection": {
+        "imageQueue": [
+            "/assets/anim/pw/pl300320-00.png",
+            "/assets/anim/pw/pl300320-01.png",
+            "/assets/anim/pw/pl300320-02.png",
+            "/assets/anim/pw/pl300320-03.png",
+            "/assets/anim/pw/pl300320-04.png",
+            "/assets/anim/pw/pl300320-05.png"
+        ],
+        "frameDuration": 100,
+        "loopFlag": false
+    },
+    "animation-milesnormal": {
+        "imageQueue": [
+            "/assets/anim/me/pl105301-00.png",
+            "/assets/anim/me/pl105301-01.png",
+            "/assets/anim/me/pl105301-02.png",
+            "/assets/anim/me/pl105301-03.png",
+            "/assets/anim/me/pl105301-04.png",
+            "/assets/anim/me/pl105301-05.png"
+        ],
+        "frameDuration": 100,
+        "loopFlag": true
+    },
+    "animation-milespointing": {
+        "imageQueue": [
+            "/assets/anim/me/pl105306-00.png",
+            "/assets/anim/me/pl105306-01.png",
+            "/assets/anim/me/pl105306-02.png",
+            "/assets/anim/me/pl105306-03.png",
+            "/assets/anim/me/pl105306-04.png",
+            "/assets/anim/me/pl105306-05.png",
+            "/assets/anim/me/pl105306-06.png",
+            "/assets/anim/me/pl105306-07.png",
+            "/assets/anim/me/pl105306-08.png",
+            "/assets/anim/me/pl105306-09.png",
+            "/assets/anim/me/pl105306-10.png",
+            "/assets/anim/me/pl105306-11.png"
+        ],
+        "frameDuration": 100,
+        "loopFlag": false
+    },
+    "animation-milesdamage": {
+        "imageQueue": [
+            "/assets/anim/me/pl10530b-00.png",
+            "/assets/anim/me/pl10530b-01.png",
+            "/assets/anim/me/pl10530b-02.png",
+            "/assets/anim/me/pl10530b-03.png"
+        ],
+        "frameDuration": 100,
+        "loopFlag": false
+        
+    },
+    "animation-milesgrinning": {
+        "imageQueue": [
+            "/assets/anim/me/pl10530f-00.png",
+            "/assets/anim/me/pl10530f-01.png",
+            "/assets/anim/me/pl10530f-02.png",
+            "/assets/anim/me/pl10530f-03.png",
+            "/assets/anim/me/pl10530f-04.png",
+            "/assets/anim/me/pl10530f-05.png",
+            "/assets/anim/me/pl10530f-06.png",
+            "/assets/anim/me/pl10530f-07.png",
+            "/assets/anim/me/pl10530f-08.png"
+        ],
+        "frameDuration": 100,
+        "loopFlag": true
+    },
+    "animation-milesslamming": {
+        "imageQueue": [
+            "/assets/anim/me/pl105302-00.png",
+            "/assets/anim/me/pl105302-01.png",
+            "/assets/anim/me/pl105302-02.png",
+            "/assets/anim/me/pl105302-03.png"
+        ],
+        "frameDuration": 100,
+        "loopFlag": false
+        
+    },
+    "animation-milesconfident": {
+        "imageQueue": [
+            "/assets/anim/me/pl105312-00.png",
+            "/assets/anim/me/pl105312-01.png",
+            "/assets/anim/me/pl105312-02.png",
+            "/assets/anim/me/pl105312-03.png"
+        ],
+        "frameDuration": 100,
+        "loopFlag": true
+    }
+}
