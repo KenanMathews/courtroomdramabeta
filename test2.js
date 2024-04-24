@@ -291,6 +291,8 @@ class SceneManager {
         this.audioSrc = null;
         this.effectSrc = null;
         this.musicPaused = false;
+        this.loadedAssets = new Map();
+
 
         this.effectPlayer.addEventListener('ended', () => {         // Add event listener to effect player to resume music after it ends
             if (this.musicPaused) {
@@ -774,10 +776,26 @@ class SceneManager {
     }
 
     async loadAssets(assetKeys) {
+        const assetsToFetch = [];
+        // Check which assets are already loaded
+        for (const assetKey of assetKeys) {
+            if (!this.loadedAssets.has(assetKey)) {
+                assetsToFetch.push(assetKey);
+            }
+        }
+
+        if (assetsToFetch.length === 0) {
+            return new Map(this.loadedAssets);
+        }
         try {
             const response = await fetch(`/asset-data?assets=${assetKeys.join(',')}`);
-            const assets = await response.json();
-            return assets;
+            const newAssets = await response.json();
+            // Add the new assets to the loaded assets map
+            for (const [key, value] of Object.entries(newAssets)) {
+                this.loadedAssets.set(key, value);
+            }
+
+            return new Map(this.loadedAssets);
         } catch (error) {
             console.error('Error loading assets:', error);
         }
