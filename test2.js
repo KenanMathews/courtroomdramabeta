@@ -9,6 +9,44 @@ class SpriteObj {
     }
 }
 
+class RequestQueue {
+    constructor(maxBatchSize) {
+        this.queue = [];
+        this.maxBatchSize = maxBatchSize;
+        this.isProcessing = false;
+    }
+
+    enqueue(item) {
+        this.queue.push(item);
+        if (!this.isProcessing) {
+            this.processQueue();
+        }
+    }
+
+    async processQueue() {
+        this.isProcessing = true;
+        while (this.queue.length > 0) {
+            const batch = this.queue.splice(0, this.maxBatchSize);
+            await this.processBatch(batch);
+        }
+        this.isProcessing = false;
+    }
+
+    async processBatch(batch) {
+        try {
+            const response = await fetch(`/asset-data?assets=${batch.join(',')}`);
+            const newAssets = await response.json();
+
+            // Add the new assets to the loaded assets map
+            for (const [key, value] of Object.entries(newAssets)) {
+                sceneManager.loadedAssets.set(key, value);
+            }
+        } catch (error) {
+            console.error('Error loading assets:', error);
+        }
+    }
+}   
+
 // Define your text box class
 class TextBox extends PIXI.Container {
     constructor(x, y, width, text, fontSize, fontFamily, textColor, boxColor) {
@@ -292,6 +330,8 @@ class SceneManager {
         this.effectSrc = null;
         this.musicPaused = false;
         this.loadedAssets = new Map();
+        this.assetQueue = new RequestQueue(10);
+
 
 
         this.effectPlayer.addEventListener('ended', () => {         // Add event listener to effect player to resume music after it ends
@@ -777,6 +817,7 @@ class SceneManager {
 
     async loadAssets(assetKeys) {
         const assetsToFetch = [];
+
         // Check which assets are already loaded
         for (const assetKey of assetKeys) {
             if (!this.loadedAssets.has(assetKey)) {
@@ -785,20 +826,26 @@ class SceneManager {
         }
 
         if (assetsToFetch.length === 0) {
+            // All assets are already loaded, return the loaded assets
             return new Map(this.loadedAssets);
         }
-        try {
-            const response = await fetch(`/asset-data?assets=${assetKeys.join(',')}`);
-            const newAssets = await response.json();
-            // Add the new assets to the loaded assets map
-            for (const [key, value] of Object.entries(newAssets)) {
-                this.loadedAssets.set(key, value);
-            }
 
-            return new Map(this.loadedAssets);
-        } catch (error) {
-            console.error('Error loading assets:', error);
+        // Enqueue the assets to fetch
+        for (const assetKey of assetsToFetch) {
+            this.assetQueue.enqueue(assetKey);
         }
+
+        // Wait for all assets to be loaded
+        await new Promise(resolve => {
+            const interval = setInterval(() => {
+                if (this.assetQueue.queue.length === 0) {
+                    clearInterval(interval);
+                    resolve();
+                }
+            }, 100);
+        });
+
+        return new Map(this.loadedAssets);
     }
     async loadScene(sceneName, scenePath, spritesData, objectsData) {
         const scene = new Scene(this.app, 1280, 720);
