@@ -1128,7 +1128,7 @@ class SceneManager {
                 return;
             }
     
-            const cacheKey = `${characterKey}-${animationKey}`;
+            const cacheKey = animationKey;
             if (this.loadedAnimations.has(cacheKey)) {
                 // Animation data is already loaded or cached
                 const animationData = this.loadedAnimations.get(cacheKey);
