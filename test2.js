@@ -1129,6 +1129,38 @@ class SceneManager {
             }
     
             const cacheKey = animationKey;
+    
+            // Create a queue for animation requests
+            if (!this.animationRequestQueue) {
+                this.animationRequestQueue = [];
+            }
+    
+            // Add the current request to the queue
+            const requestPromise = new Promise(async (resolve, reject) => {
+                this.animationRequestQueue.push({ sceneName, characterKey, animationKey, resolve, reject });
+    
+                // If this is the only request in the queue, process it immediately
+                if (this.animationRequestQueue.length === 1) {
+                    await this.processAnimationRequest();
+                }
+            });
+    
+            return requestPromise;
+        } catch (error) {
+            console.error('Error loading animations:', error);
+        }
+    }
+    
+    async processAnimationRequest() {
+        if (this.animationRequestQueue.length === 0) {
+            return;
+        }
+    
+        const { sceneName, characterKey, animationKey, resolve, reject } = this.animationRequestQueue[0];
+        const scene = this.scenes.get(sceneName);
+        const cacheKey = animationKey;
+    
+        try {
             if (this.loadedAnimations.has(cacheKey)) {
                 // Animation data is already loaded or cached
                 const animationData = this.loadedAnimations.get(cacheKey);
@@ -1147,11 +1179,15 @@ class SceneManager {
                     animationData.frameDuration,
                     animationData.loopFlag
                 );
+    
+                // Resolve the promise and remove the request from the queue
+                resolve();
+                this.animationRequestQueue.shift();
             } else {
                 // Animation data needs to be fetched
                 const animationData = await scene.loadAnimationData(animationKey);
-                const characterName = characterKey.substring("character-".length);
-                const sprite = scene.spriteMap.get(characterName);
+    
+                const sprite = scene.spriteMap.get(characterKey);
     
                 // Stop any existing animation on the sprite
                 if (sprite.animationTimeout) {
@@ -1169,70 +1205,147 @@ class SceneManager {
     
                 // Cache the loaded animation data
                 this.loadedAnimations.set(cacheKey, animationData[animationKey]);
+    
+                // Resolve the promise and remove the request from the queue
+                resolve();
+                this.animationRequestQueue.shift();
             }
+    
+            // Process the next request in the queue
+            this.processAnimationRequest();
         } catch (error) {
-            console.error('Error loading animations:', error);
+            // Reject the promise and remove the request from the queue
+            reject(error);
+            this.animationRequestQueue.shift();
+    
+            // Process the next request in the queue
+            this.processAnimationRequest();
         }
     }
 
-        loadPosesforChat(characterKey) {
-            fetch(`/asset-data?assets=${characterKey}`)
-                .then(response => response.json())
-                .then(data => {
-                    const characterData = data[characterKey]
-                    const characterAnimations = Object.values(characterData.animations).map(animation => `${animation}`);
-
-                    fetch(`/asset-data?assets=${characterAnimations.join(',')}`)
-                        .then(response => response.json())
-                        .then(phoenixAnimations => {
-                            const animationContainer = document.querySelector('#animation-pose');
-                            animationContainer.innerHTML = ""; // Clear previous content
-
-                            for (const animationKey of Object.keys(characterData.animations)) {
-                                const previewContainer = document.createElement('div');
-                                previewContainer.classList.add('relative', 'w-24', 'h-18', 'bg-gray-800', 'rounded', 'overflow-hidden', 'cursor-pointer');
-                                previewContainer.setAttribute('data-animation-key', characterData.animations[animationKey]);
-
-                                const img = document.createElement('img');
-                                img.classList.add('w-full', 'h-full', 'object-contain', 'opacity-80', 'hover:opacity-100', 'transition-opacity', 'duration-300');
-                                
-                                const animation = phoenixAnimations[`${characterData.animations[animationKey]}`]; // Get the animation object by its key
-                                const imageQueue = animation.imageQueue;
-                                let currentIndex = 0;
-                                img.src = imageQueue[currentIndex];
-                            
-                                const interval = setInterval(() => {
-                                    currentIndex = (currentIndex + 1) % imageQueue.length;
-                                    img.src = imageQueue[currentIndex];
-                                }, animation.frameDuration);
-                            
-                                previewContainer.addEventListener('mouseleave', () => {
-                                    clearInterval(interval);
-                                    img.src = imageQueue[0];
-                                });
-
-                                previewContainer.addEventListener('click', () => {
-                                    const animationKey = previewContainer.getAttribute('data-animation-key');
-                                    this.ws.send(JSON.stringify({ type: 'sendPose', data: animationKey }));
-                                });
-                                const overlayContainer = document.createElement('div');
-                                overlayContainer.classList.add('absolute', 'inset-0', 'flex', 'items-center', 'justify-center', 'bg-black', 'bg-opacity-0', 'hover:bg-opacity-50', 'transition-opacity', 'duration-300');
-                            
-                                const title = document.createElement('h3');
-                                title.textContent = Object.keys(characterData.animations).find(key => JSON.stringify(characterData.animations[key]) === JSON.stringify(animationKey)); // Use the display name as title
-                                title.classList.add('text-white', 'text-sm', 'font-bold', 'z-10', 'opacity-0', 'hover:opacity-100', 'transition-opacity', 'duration-300');
-                            
-                                overlayContainer.appendChild(title);
-                                previewContainer.appendChild(img);
-                                previewContainer.appendChild(overlayContainer);
-                            
-                                animationContainer.appendChild(previewContainer); // Append here
-                            }
-                        })
-                        .catch(error => console.error('Error loading Phoenix Wright animations:', error));
-                })
-                .catch(error => console.error('Error loading Phoenix Wright data:', error));
+    loadPosesforChat(characterKey) {
+        // Create a queue for pose requests
+        if (!this.poseRequestQueue) {
+            this.poseRequestQueue = [];
         }
+    
+        // Add the current request to the queue
+        const requestPromise = new Promise(async (resolve, reject) => {
+            this.poseRequestQueue.push({ characterKey, resolve, reject });
+    
+            // If this is the only request in the queue, process it immediately
+            if (this.poseRequestQueue.length === 1) {
+                await this.processPoseRequest();
+            }
+        });
+    
+        return requestPromise;
+    }
+    
+    async processPoseRequest() {
+        if (this.poseRequestQueue.length === 0) {
+            return;
+        }
+    
+        const { characterKey, resolve, reject } = this.poseRequestQueue[0];
+    
+        try {
+            const response = await fetch(`/asset-data?assets=${characterKey}`);
+            const data = await response.json();
+            const characterData = data[characterKey];
+            const characterAnimations = Object.values(characterData.animations);
+    
+            // Check if all animations are already cached
+            const uncachedAnimations = characterAnimations.filter(animationKey => !this.loadedAnimations.has(animationKey));
+    
+            if (uncachedAnimations.length === 0) {
+                // All animations are cached, use the cached data
+                const cachedAnimationData = Object.fromEntries(characterAnimations.map(animationKey => [animationKey, this.loadedAnimations.get(animationKey)]));
+                this.renderPosePreviewContainer(characterData, cachedAnimationData);
+                resolve();
+            } else {
+                // Fetch uncached animations from the server
+                const uncachedAnimationsResponse = await fetch(`/asset-data?assets=${uncachedAnimations.join(',')}`);
+                const phoenixAnimations = await uncachedAnimationsResponse.json();
+    
+                // Cache the fetched animations
+                for (const [animationKey, animationData] of Object.entries(phoenixAnimations)) {
+                    this.loadedAnimations.set(animationKey, animationData);
+                }
+    
+                // Merge cached and fetched animation data
+                const mergedAnimationData = { ...Object.fromEntries(this.loadedAnimations), ...phoenixAnimations };
+    
+                this.renderPosePreviewContainer(characterData, mergedAnimationData);
+                resolve();
+            }
+    
+            // Remove the processed request from the queue
+            this.poseRequestQueue.shift();
+    
+            // Process the next request in the queue
+            this.processPoseRequest();
+        } catch (error) {
+            reject(error);
+            this.poseRequestQueue.shift();
+            this.processPoseRequest();
+        }
+    }
+    
+    renderPosePreviewContainer(characterData, animationData) {
+        const animationContainer = document.querySelector('#animation-pose');
+        animationContainer.innerHTML = ""; // Clear previous content
+    
+        for (const [animationKey, animation] of Object.entries(animationData)) {
+            const previewContainer = document.createElement('div');
+            previewContainer.classList.add('relative', 'w-24', 'h-18', 'bg-gray-800', 'rounded', 'overflow-hidden', 'cursor-pointer');
+            previewContainer.setAttribute('data-animation-key', animationKey);
+    
+            const imageCache = animation.imageQueue.map(imageSrc => {
+                const img = new Image();
+                img.src = imageSrc;
+                return img;
+            });
+    
+            let currentIndex = 0;
+            const img = imageCache[currentIndex];
+            img.classList.add('w-full', 'h-full', 'object-contain');
+            previewContainer.appendChild(img);
+    
+            let interval;
+    
+            previewContainer.addEventListener('mouseenter', () => {
+                // Start the animation interval
+                interval = setInterval(() => {
+                    currentIndex = (currentIndex + 1) % imageCache.length;
+                    previewContainer.replaceChild(imageCache[currentIndex], img);
+                }, animation.frameDuration);
+            });
+    
+            previewContainer.addEventListener('mouseleave', () => {
+                // Stop the animation interval
+                clearInterval(interval);
+                currentIndex = 0;
+                previewContainer.replaceChild(imageCache[currentIndex], img);
+            });
+    
+            previewContainer.addEventListener('click', () => {
+                this.ws.send(JSON.stringify({ type: 'sendPose', data: animationKey }));
+            });
+    
+            const overlayContainer = document.createElement('div');
+            overlayContainer.classList.add('absolute', 'inset-0', 'flex', 'items-center', 'justify-center', 'bg-black', 'bg-opacity-0', 'hover:bg-opacity-50', 'transition-opacity', 'duration-300');
+    
+            const title = document.createElement('h3');
+            title.textContent = Object.keys(characterData.animations).find(key => JSON.stringify(characterData.animations[key]) === JSON.stringify(animationKey)); // Use the display name as title
+            title.classList.add('text-white', 'text-sm', 'font-bold', 'z-10', 'opacity-0', 'hover:opacity-100', 'transition-opacity', 'duration-300');
+    
+            overlayContainer.appendChild(title);
+            previewContainer.appendChild(overlayContainer);
+    
+            animationContainer.appendChild(previewContainer);
+        }
+    }
 }
 async function bufferMessage(lastMessage, delay = 30) {
     const novelTextBox = document.getElementById('novelTextBox');
