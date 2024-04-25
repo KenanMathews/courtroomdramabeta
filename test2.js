@@ -1321,9 +1321,9 @@ class SceneManager {
                 previewContainer.appendChild(imageCache[currentIndex]); // Show the first image
             });
 
-            previewContainer.addEventListener('click', () => {
+            previewContainer.addEventListener('click', function() {
                 this.ws.send(JSON.stringify({ type: 'sendPose', data: animationKey }));
-            });
+            }.bind(this));
              
             const overlayContainer = document.createElement('div');
             overlayContainer.classList.add('absolute', 'inset-0', 'flex', 'items-center', 'justify-center', 'bg-black', 'bg-opacity-0', 'hover:bg-opacity-50', 'transition-opacity', 'duration-300');
