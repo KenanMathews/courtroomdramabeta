@@ -514,6 +514,7 @@ class SceneManager {
         }
     }
     handleObjectionforUsers(data) {
+        const isSpeaker = this.roomInfo.users.find(user => user.userId === this.userId && user.isSpeaker);
         showFullScreenAlert(data);
         const objectionBtn = document.getElementById('objectionBtn');
         const holdItBtn = document.getElementById('holdItBtn');
@@ -523,8 +524,6 @@ class SceneManager {
             holdItBtn.classList.remove('hidden');
             objectionBtn.classList.add('hidden');
         }
-        oc.classList.add('hidden');
-
     }
     handleSideSelectedWS(data) {
         const courtSideSelectionLayer = document.getElementById('courtSideSelectionLayer');
@@ -1321,7 +1320,7 @@ class SceneManager {
                 previewContainer.appendChild(imageCache[currentIndex]); // Show the first image
             });
 
-            previewContainer.addEventListener('click', function() {
+            previewContainer.addEventListener(('mousedown', function() {
                 this.ws.send(JSON.stringify({ type: 'sendPose', data: animationKey }));
             }.bind(this));
              
