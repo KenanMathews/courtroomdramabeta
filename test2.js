@@ -1320,7 +1320,7 @@ class SceneManager {
                 previewContainer.appendChild(imageCache[currentIndex]); // Show the first image
             });
 
-            previewContainer.addEventListener(('mousedown', function() {
+            previewContainer.addEventListener('mousedown', function() {
                 this.ws.send(JSON.stringify({ type: 'sendPose', data: animationKey }));
             }.bind(this));
              
