@@ -1318,7 +1318,10 @@ class SceneManager {
                 // Start the animation interval
                 interval = setInterval(() => {
                     currentIndex = (currentIndex + 1) % imageCache.length;
-                    previewContainer.replaceChild(imageCache[currentIndex], img);
+                    const newImg = imageCache[currentIndex]; // Create the new image here
+                    newImg.classList.add('w-full', 'h-full', 'object-contain');
+                    previewContainer.innerHTML = ""; // Clear previous content
+                    previewContainer.appendChild(newImg); // Add the new image
                 }, animation.frameDuration);
             });
     
@@ -1326,7 +1329,8 @@ class SceneManager {
                 // Stop the animation interval
                 clearInterval(interval);
                 currentIndex = 0;
-                previewContainer.replaceChild(imageCache[currentIndex], img);
+                previewContainer.innerHTML = ""; // Clear previous content
+                previewContainer.appendChild(imageCache[currentIndex]); // Show the first image
             });
     
             previewContainer.addEventListener('click', () => {
@@ -1346,6 +1350,7 @@ class SceneManager {
             animationContainer.appendChild(previewContainer);
         }
     }
+    
 }
 async function bufferMessage(lastMessage, delay = 30) {
     const novelTextBox = document.getElementById('novelTextBox');
