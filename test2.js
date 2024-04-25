@@ -9,44 +9,6 @@ class SpriteObj {
     }
 }
 
-class RequestQueue {
-    constructor(maxBatchSize) {
-        this.queue = [];
-        this.maxBatchSize = maxBatchSize;
-        this.isProcessing = false;
-    }
-
-    enqueue(item) {
-        this.queue.push(item);
-        if (!this.isProcessing) {
-            this.processQueue();
-        }
-    }
-
-    async processQueue() {
-        this.isProcessing = true;
-        while (this.queue.length > 0) {
-            const batch = this.queue.splice(0, this.maxBatchSize);
-            await this.processBatch(batch);
-        }
-        this.isProcessing = false;
-    }
-
-    async processBatch(batch) {
-        try {
-            const response = await fetch(`/asset-data?assets=${batch.join(',')}`);
-            const newAssets = await response.json();
-
-            // Add the new assets to the loaded assets map
-            for (const [key, value] of Object.entries(newAssets)) {
-                sceneManager.loadedAssets.set(key, value);
-            }
-        } catch (error) {
-            console.error('Error loading assets:', error);
-        }
-    }
-}   
-
 // Define your text box class
 class TextBox extends PIXI.Container {
     constructor(x, y, width, text, fontSize, fontFamily, textColor, boxColor) {
@@ -160,79 +122,80 @@ class Scene extends PIXI.Container {
 
     loadAnimationToSprite(characterKey, imageQueue, frameDuration, loopFlag) {
         const sprite = this.spriteMap.get(characterKey);
+    
         // Stop any existing animation
         if (sprite.animationTimeout) {
-          clearTimeout(sprite.animationTimeout);
-          sprite.texture = sprite.originalTexture; // Reset the texture to the original
+            clearTimeout(sprite.animationTimeout);
+            sprite.texture = sprite.originalTexture; // Reset the texture to the original
         }
-      
-        let currentFrame = 0;
+    
         sprite.originalTexture = sprite.texture; // Store the original texture
-      
+    
+        let currentFrame = 0;
+    
         const animateNextFrame = () => {
-          if (currentFrame < imageQueue.length) {
-            const imageSrc = imageQueue[currentFrame];
-            const texture = PIXI.Texture.from(imageSrc);
-            sprite.texture = texture;
-            currentFrame++;
-            sprite.animationTimeout = setTimeout(animateNextFrame, frameDuration);
-          } else {
-            // Reset to the first frame
-            currentFrame = 0;
-      
-            // If loopFlag is false, stop the animation
-            if (loopFlag) {
-                // Loop animation
+            if (currentFrame < imageQueue.length) {
+                const imageSrc = imageQueue[currentFrame];
+                const texture = PIXI.Texture.from(imageSrc);
+                sprite.texture = texture;
+                currentFrame++;
                 sprite.animationTimeout = setTimeout(animateNextFrame, frameDuration);
-              } else {
-                // Stop animation and reset to the original texture
-                clearTimeout(sprite.animationTimeout);
-                sprite.texture = sprite.originalTexture;
-              }
-          }
+            } else {
+                // Reset to the first frame
+                currentFrame = 0;
+    
+                // If loopFlag is false, stop the animation
+                if (loopFlag) {
+                    // Loop animation
+                    sprite.animationTimeout = setTimeout(animateNextFrame, frameDuration);
+                } else {
+                    // Stop animation and reset to the original texture
+                    clearTimeout(sprite.animationTimeout);
+                    sprite.texture = sprite.originalTexture;
+                }
+            }
         };
-      
+    
         // Start animating
         animateNextFrame();
-      }
-      
+    }
 
-      loadAnimationToSpriteInternal(sprite, imageQueue, frameDuration, loopFlag) {
+    loadAnimationToSpriteInternal(sprite, imageQueue, frameDuration, loopFlag) {
         // Stop any existing animation
         if (sprite.animationTimeout) {
-          clearTimeout(sprite.animationTimeout);
-          sprite.texture = sprite.originalTexture; // Reset the texture to the original
+            clearTimeout(sprite.animationTimeout);
+            sprite.texture = sprite.originalTexture; // Reset the texture to the original
         }
-      
+    
         let currentFrame = 0;
         sprite.originalTexture = sprite.texture; // Store the original texture
-      
+    
         const animateNextFrame = () => {
-          if (currentFrame < imageQueue.length) {
-            const imageSrc = imageQueue[currentFrame];
-            const texture = PIXI.Texture.from(imageSrc);
-            sprite.texture = texture;
-            currentFrame++;
-            sprite.animationTimeout = setTimeout(animateNextFrame, frameDuration);
-          } else {
-            // Reset to the first frame
-            currentFrame = 0;
-      
-            // If loopFlag is false, stop the animation
-            if (loopFlag) {
-                // Loop animation
+            if (currentFrame < imageQueue.length) {
+                const imageSrc = imageQueue[currentFrame];
+                const texture = PIXI.Texture.from(imageSrc);
+                sprite.texture = texture;
+                currentFrame++;
                 sprite.animationTimeout = setTimeout(animateNextFrame, frameDuration);
-              } else {
-                // Stop animation and reset to the original texture
-                clearTimeout(sprite.animationTimeout);
-                sprite.texture = sprite.originalTexture;
-              }
-          }
+            } else {
+                // Reset to the first frame
+                currentFrame = 0;
+    
+                // If loopFlag is false, stop the animation
+                if (loopFlag) {
+                    // Loop animation
+                    sprite.animationTimeout = setTimeout(animateNextFrame, frameDuration);
+                } else {
+                    // Stop animation and reset to the original texture
+                    clearTimeout(sprite.animationTimeout);
+                    sprite.texture = sprite.originalTexture;
+                }
+            }
         };
-      
+    
         // Start animating
         animateNextFrame();
-      }
+    }
 
     setBackground(backgroundObj) {
         const texture = PIXI.Texture.from(backgroundObj.imageSrc);
@@ -330,9 +293,7 @@ class SceneManager {
         this.effectSrc = null;
         this.musicPaused = false;
         this.loadedAssets = new Map();
-        this.assetQueue = new RequestQueue(10);
-
-
+        this.loadedAnimations = new Map();
 
         this.effectPlayer.addEventListener('ended', () => {         // Add event listener to effect player to resume music after it ends
             if (this.musicPaused) {
@@ -780,7 +741,7 @@ class SceneManager {
         scene.assets = await this.loadAssets([...characterKeys, ...animationKeys]);
 
         return Promise.all(spritesData.map(async (spriteObj) => {
-            const characterData = scene.assets[`character-${spriteObj.characterKey}`];
+            const characterData = scene.assets.get(`character-${spriteObj.characterKey}`);
             const sprite = scene.addSprite(
                 new SpriteObj(
                     characterData.imageSrc,
@@ -804,7 +765,7 @@ class SceneManager {
 
             // Load the animation if it exists
             if (spriteObj.animationKey) {
-                const animationData = scene.assets[`animation-${spriteObj.animationKey}`];
+                const animationData = scene.assets.get(`animation-${spriteObj.animationKey}`);
                 if (animationData) {
                     await scene.loadAnimationToSprite(spriteObj.characterKey, animationData.imageQueue, animationData.frameDuration);
                 }
@@ -829,23 +790,18 @@ class SceneManager {
             // All assets are already loaded, return the loaded assets
             return new Map(this.loadedAssets);
         }
+        try {
+            const response = await fetch(`/asset-data?assets=${assetKeys.join(',')}`);
+            const newAssets = await response.json();
+            // Add the new assets to the loaded assets map
+            for (const [key, value] of Object.entries(newAssets)) {
+                this.loadedAssets.set(key, value);
+            }
 
-        // Enqueue the assets to fetch
-        for (const assetKey of assetsToFetch) {
-            this.assetQueue.enqueue(assetKey);
+            return new Map(this.loadedAssets);
+        } catch (error) {
+            console.error('Error loading assets:', error);
         }
-
-        // Wait for all assets to be loaded
-        await new Promise(resolve => {
-            const interval = setInterval(() => {
-                if (this.assetQueue.queue.length === 0) {
-                    clearInterval(interval);
-                    resolve();
-                }
-            }, 100);
-        });
-
-        return new Map(this.loadedAssets);
     }
     async loadScene(sceneName, scenePath, spritesData, objectsData) {
         const scene = new Scene(this.app, 1280, 720);
@@ -876,7 +832,7 @@ class SceneManager {
             //}
 
             for (const spriteObj of spritesData) {
-                const characterData = scene.assets[`character-${spriteObj.characterKey}`];
+                const characterData = scene.assets.get(`character-${spriteObj.characterKey}`);
                 scene.addSprite(
                     new SpriteObj(
                         characterData.imageSrc,
@@ -888,7 +844,7 @@ class SceneManager {
                     )
                 );
 
-                const animationData = scene.assets[`animation-${spriteObj.animationKey}`];
+                const animationData = scene.assets.get(`animation-${spriteObj.animationKey}`);
                 if (animationData) {
                     await scene.loadAnimationToSprite(spriteObj.characterKey, animationData.imageQueue, animationData.frameDuration);
                 }
@@ -1166,92 +1122,117 @@ class SceneManager {
     }
     async loadAnimations(sceneName, characterKey, animationKey) {
         try {
-          const scene = this.scenes.get(sceneName);
-          if (!scene) {
-            console.error('Scene not found.');
-            return;
-          }
-      
-          const characterName = characterKey.substring("character-".length);
-          const animationData = await scene.loadAnimationData(animationKey);
-          const sprite = scene.spriteMap.get(characterName);
-      
-          // Stop any existing animation on the sprite
-          if (sprite.animationTimeout) {
-            clearTimeout(sprite.animationTimeout);
-            sprite.texture = sprite.originalTexture; // Reset the texture to the original
-          }
-      
-          // Load the new animation
-          scene.loadAnimationToSpriteInternal(
-            sprite,
-            animationData[animationKey].imageQueue,
-            animationData[animationKey].frameDuration,
-            animationData[animationKey].loopFlag
-          );
+            const scene = this.scenes.get(sceneName);
+            if (!scene) {
+                console.error('Scene not found.');
+                return;
+            }
+    
+            const cacheKey = `${characterKey}-${animationKey}`;
+            if (this.loadedAnimations.has(cacheKey)) {
+                // Animation data is already loaded or cached
+                const animationData = this.loadedAnimations.get(cacheKey);
+                const sprite = scene.spriteMap.get(characterKey);
+    
+                // Stop any existing animation on the sprite
+                if (sprite.animationTimeout) {
+                    clearTimeout(sprite.animationTimeout);
+                    sprite.texture = sprite.originalTexture; // Reset the texture to the original
+                }
+    
+                // Load the animation from the cached data
+                scene.loadAnimationToSpriteInternal(
+                    sprite,
+                    animationData.imageQueue,
+                    animationData.frameDuration,
+                    animationData.loopFlag
+                );
+            } else {
+                // Animation data needs to be fetched
+                const animationData = await scene.loadAnimationData(animationKey);
+                const characterName = characterKey.substring("character-".length);
+                const sprite = scene.spriteMap.get(characterName);
+    
+                // Stop any existing animation on the sprite
+                if (sprite.animationTimeout) {
+                    clearTimeout(sprite.animationTimeout);
+                    sprite.texture = sprite.originalTexture; // Reset the texture to the original
+                }
+    
+                // Load the new animation
+                scene.loadAnimationToSpriteInternal(
+                    sprite,
+                    animationData[animationKey].imageQueue,
+                    animationData[animationKey].frameDuration,
+                    animationData[animationKey].loopFlag
+                );
+    
+                // Cache the loaded animation data
+                this.loadedAnimations.set(cacheKey, animationData[animationKey]);
+            }
         } catch (error) {
-          console.error('Error loading animations:', error);
+            console.error('Error loading animations:', error);
         }
-      }
-
-    loadPosesforChat(characterKey) {
-        fetch(`/asset-data?assets=${characterKey}`)
-            .then(response => response.json())
-            .then(data => {
-                const characterData = data[characterKey]
-                const characterAnimations = Object.values(characterData.animations).map(animation => `${animation}`);
-
-                fetch(`/asset-data?assets=${characterAnimations.join(',')}`)
-                    .then(response => response.json())
-                    .then(phoenixAnimations => {
-                        const animationContainer = document.querySelector('#animation-pose');
-                        animationContainer.innerHTML = ""; // Clear previous content
-
-                        for (const animationKey of Object.keys(characterData.animations)) {
-                            const previewContainer = document.createElement('div');
-                            previewContainer.classList.add('relative', 'w-24', 'h-18', 'bg-gray-800', 'rounded', 'overflow-hidden', 'cursor-pointer');
-                            previewContainer.setAttribute('data-animation-key', characterData.animations[animationKey]);
-
-                            const img = document.createElement('img');
-                            img.classList.add('w-full', 'h-full', 'object-contain', 'opacity-80', 'hover:opacity-100', 'transition-opacity', 'duration-300');
-
-                            const animation = phoenixAnimations[`${characterData.animations[animationKey]}`]; // Get the animation object by its key
-                            const imageQueue = animation.imageQueue;
-                            let currentIndex = 0;
-                            img.src = imageQueue[currentIndex];
-
-                            const interval = setInterval(() => {
-                                currentIndex = (currentIndex + 1) % imageQueue.length;
-                                img.src = imageQueue[currentIndex];
-                            }, animation.frameDuration);
-
-                            previewContainer.addEventListener('mouseleave', () => {
-                                clearInterval(interval);
-                                img.src = imageQueue[0];
-                            });
-
-                            previewContainer.addEventListener('click', () => {
-                                const animationKey = previewContainer.getAttribute('data-animation-key');
-                                this.ws.send(JSON.stringify({ type: 'sendPose', data: animationKey }));
-                            });
-                            const overlayContainer = document.createElement('div');
-                            overlayContainer.classList.add('absolute', 'inset-0', 'flex', 'items-center', 'justify-center', 'bg-black', 'bg-opacity-0', 'hover:bg-opacity-50', 'transition-opacity', 'duration-300');
-
-                            const title = document.createElement('h3');
-                            title.textContent = Object.keys(characterData.animations).find(key => JSON.stringify(characterData.animations[key]) === JSON.stringify(animationKey)); // Use the display name as title
-                            title.classList.add('text-white', 'text-sm', 'font-bold', 'z-10', 'opacity-0', 'hover:opacity-100', 'transition-opacity', 'duration-300');
-
-                            overlayContainer.appendChild(title);
-                            previewContainer.appendChild(img);
-                            previewContainer.appendChild(overlayContainer);
-
-                            animationContainer.appendChild(previewContainer); // Append here
-                        }
-                    })
-                    .catch(error => console.error('Error loading Phoenix Wright animations:', error));
-            })
-            .catch(error => console.error('Error loading Phoenix Wright data:', error));
     }
+
+        loadPosesforChat(characterKey) {
+            fetch(`/asset-data?assets=${characterKey}`)
+                .then(response => response.json())
+                .then(data => {
+                    const characterData = data[characterKey]
+                    const characterAnimations = Object.values(characterData.animations).map(animation => `${animation}`);
+
+                    fetch(`/asset-data?assets=${characterAnimations.join(',')}`)
+                        .then(response => response.json())
+                        .then(phoenixAnimations => {
+                            const animationContainer = document.querySelector('#animation-pose');
+                            animationContainer.innerHTML = ""; // Clear previous content
+
+                            for (const animationKey of Object.keys(characterData.animations)) {
+                                const previewContainer = document.createElement('div');
+                                previewContainer.classList.add('relative', 'w-24', 'h-18', 'bg-gray-800', 'rounded', 'overflow-hidden', 'cursor-pointer');
+                                previewContainer.setAttribute('data-animation-key', characterData.animations[animationKey]);
+
+                                const img = document.createElement('img');
+                                img.classList.add('w-full', 'h-full', 'object-contain', 'opacity-80', 'hover:opacity-100', 'transition-opacity', 'duration-300');
+                                
+                                const animation = phoenixAnimations[`${characterData.animations[animationKey]}`]; // Get the animation object by its key
+                                const imageQueue = animation.imageQueue;
+                                let currentIndex = 0;
+                                img.src = imageQueue[currentIndex];
+                            
+                                const interval = setInterval(() => {
+                                    currentIndex = (currentIndex + 1) % imageQueue.length;
+                                    img.src = imageQueue[currentIndex];
+                                }, animation.frameDuration);
+                            
+                                previewContainer.addEventListener('mouseleave', () => {
+                                    clearInterval(interval);
+                                    img.src = imageQueue[0];
+                                });
+
+                                previewContainer.addEventListener('click', () => {
+                                    const animationKey = previewContainer.getAttribute('data-animation-key');
+                                    this.ws.send(JSON.stringify({ type: 'sendPose', data: animationKey }));
+                                });
+                                const overlayContainer = document.createElement('div');
+                                overlayContainer.classList.add('absolute', 'inset-0', 'flex', 'items-center', 'justify-center', 'bg-black', 'bg-opacity-0', 'hover:bg-opacity-50', 'transition-opacity', 'duration-300');
+                            
+                                const title = document.createElement('h3');
+                                title.textContent = Object.keys(characterData.animations).find(key => JSON.stringify(characterData.animations[key]) === JSON.stringify(animationKey)); // Use the display name as title
+                                title.classList.add('text-white', 'text-sm', 'font-bold', 'z-10', 'opacity-0', 'hover:opacity-100', 'transition-opacity', 'duration-300');
+                            
+                                overlayContainer.appendChild(title);
+                                previewContainer.appendChild(img);
+                                previewContainer.appendChild(overlayContainer);
+                            
+                                animationContainer.appendChild(previewContainer); // Append here
+                            }
+                        })
+                        .catch(error => console.error('Error loading Phoenix Wright animations:', error));
+                })
+                .catch(error => console.error('Error loading Phoenix Wright data:', error));
+        }
 }
 async function bufferMessage(lastMessage, delay = 30) {
     const novelTextBox = document.getElementById('novelTextBox');
