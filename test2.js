@@ -1324,16 +1324,16 @@ class SceneManager {
             previewContainer.addEventListener('click', () => {
                 this.ws.send(JSON.stringify({ type: 'sendPose', data: animationKey }));
             });
-
-            // const overlayContainer = document.createElement('div');
-            // overlayContainer.classList.add('absolute', 'inset-0', 'flex', 'items-center', 'justify-center', 'bg-black', 'bg-opacity-0', 'hover:bg-opacity-50', 'transition-opacity', 'duration-300');
-
-            // const title = document.createElement('h3');
-            // title.textContent = Object.keys(characterData.animations).find(key => JSON.stringify(characterData.animations[key]) === JSON.stringify(animationKey)); // Use the display name as title
-            // title.classList.add('text-white', 'text-sm', 'font-bold', 'z-10', 'opacity-0', 'hover:opacity-100', 'transition-opacity', 'duration-300');
-
-            // overlayContainer.appendChild(title);
-            // previewContainer.appendChild(overlayContainer);
+             
+            const overlayContainer = document.createElement('div');
+            overlayContainer.classList.add('absolute', 'inset-0', 'flex', 'items-center', 'justify-center', 'bg-black', 'bg-opacity-0', 'hover:bg-opacity-50', 'transition-opacity', 'duration-300');
+             
+            const title = document.createElement('h3');
+            title.textContent = Object.keys(characterData.animations).find(key => JSON.stringify(characterData.animations[key]) === JSON.stringify(animationKey)); // Use the display name as title
+            title.classList.add('text-white', 'text-sm', 'font-bold', 'z-10', 'opacity-0', 'hover:opacity-100', 'transition-opacity', 'duration-300');
+             
+            overlayContainer.appendChild(title);
+            previewContainer.appendChild(overlayContainer);
 
             animationContainer.appendChild(previewContainer);
         }
