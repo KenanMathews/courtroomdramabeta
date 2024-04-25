@@ -16,8 +16,8 @@
       "backgroundPath": "/assets/bg/bg1004 (Prosecution).png",
       "spritesData": [
         {
-          "characterKey": "milesedgeworth",
-          "animationKey": "milesnormal"
+          "characterKey": "character-milesedgeworth",
+          "animationKey": "animation-milesnormal"
         }
       ],
       "objectsData": []
@@ -27,8 +27,8 @@
       "backgroundPath": "/assets/bg/bg1003 (Defense).png",
       "spritesData": [
         {
-          "characterKey": "phoenixwright",
-          "animationKey": "phoenixnormal"
+          "characterKey": "character-phoenixwright",
+          "animationKey": "animation-phoenixnormal"
         }
       ],
       "objectsData": []

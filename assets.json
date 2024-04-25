@@ -33,14 +33,6 @@
             "confident": "animation-milesconfident"
         }
     },
-    "character-phoenixwright-pointing": {
-        "imageSrc": "/assets/anim/pw/pl10030a-00.png",
-        "spriteWidth": 960,
-        "spriteHeight": 720,
-        "spriteX": 180,
-        "spriteY": 8, 
-        "animationKey": "animation-phoenixpointing"
-    },
     "animation-phoenixpointing": {
         "imageQueue": [
             "/assets/anim/pw/pl10030a-00.png",
