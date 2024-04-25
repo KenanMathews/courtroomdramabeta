@@ -280,7 +280,7 @@ class SceneManager {
         this.sceneNames = [];
         this.currentIndex = 0;
         this.intervalId = null;
-        this.ws = new WebSocket('ws://localhost:8001/'); // Connect to the WebSocket server
+        this.ws = new WebSocket('wss://courtroomdramabeta.onrender.com/'); // Connect to the WebSocket server
         this.setupWebSocketHandlers();
         this.roomName = null;
         this.roomInfo = {};
@@ -733,7 +733,7 @@ class SceneManager {
         const characterKeys = spritesData.map(sprite => sprite.characterKey);
         const animationKeys = spritesData.map(sprite => {
             if (sprite.animationKey) {
-                return `animation-${sprite.animationKey}`;
+                return sprite.animationKey;
             } else {
                 return null;
             }
@@ -765,7 +765,7 @@ class SceneManager {
 
             // Load the animation if it exists
             if (spriteObj.animationKey) {
-                const animationData = scene.assets.get(`animation-${spriteObj.animationKey}`);
+                const animationData = scene.assets.get(spriteObj.animationKey);
                 if (animationData) {
                     await scene.loadAnimationToSprite(spriteObj.characterKey, animationData.imageQueue, animationData.frameDuration);
                 }
@@ -814,10 +814,9 @@ class SceneManager {
             const characterKeys = spritesData.map(sprite => sprite.characterKey);
             const animationKeys = spritesData.map(sprite => {
                 if (sprite.animationKey) {
-                    return `animation-${sprite.animationKey}`;
+                    return sprite.animationKey;
                 } else {
-                    // Handle cases where animationKey might be missing (optional)
-                    return null; // Or some default value
+                    return null; 
                 }
             });
             scene.assets = await this.loadAssets([...characterKeys, ...animationKeys]);
@@ -844,7 +843,7 @@ class SceneManager {
                     )
                 );
 
-                const animationData = scene.assets.get(`animation-${spriteObj.animationKey}`);
+                const animationData = scene.assets.get(spriteObj.animationKey);
                 if (animationData) {
                     await scene.loadAnimationToSprite(spriteObj.characterKey, animationData.imageQueue, animationData.frameDuration);
                 }
