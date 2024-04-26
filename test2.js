@@ -280,7 +280,7 @@ class SceneManager {
         this.sceneNames = [];
         this.currentIndex = 0;
         this.intervalId = null;
-        this.ws = new WebSocket('wss://courtroomdramabeta.onrender.com/'); // Connect to the WebSocket server
+        this.ws = new WebSocket('ws://localhost:8001/'); // Connect to the WebSocket server
         this.setupWebSocketHandlers();
         this.roomName = null;
         this.roomInfo = {};
@@ -504,7 +504,7 @@ class SceneManager {
         const chatInput = document.getElementById('chat-input');
         const holdItBtn = document.getElementById('holdItBtn');
         const objectionBtn = document.getElementById('objectionBtn');
-        chatModal.classList.add('hidden');
+        showChatSidebar();
         chatControls.classList.add('hidden');
         chatInput.classList.add('hidden');
         if (!isSpeaker) {
@@ -549,7 +549,6 @@ class SceneManager {
     handleChatBox() {
         const isSpeaker = this.roomInfo.users.find(user => user.userId === this.userId && user.isSpeaker);
         // Update the UI to show the chat box
-        const chatModal = document.getElementById('chat-modal');
         const chatControls = document.getElementById('chat-controls');
         const sendBtn = document.getElementById('send-btn');
         const popoverBtn = document.getElementById('popover-btn');
@@ -557,16 +556,13 @@ class SceneManager {
         const stopBtn = document.getElementById('stop-btn');
         const chatInput = document.getElementById('chat-input');
         const objectionLayer = document.getElementById('objectionLayer');
-
-
         if (isSpeaker) {
-            chatModal.classList.remove('hidden');
+            showChatSidebar();
             chatControls.classList.remove('hidden');
             chatInput.classList.remove('hidden');
             objectionLayer.classList.add('hidden');
 
         } else {
-            chatModal.classList.add('hidden');
             chatControls.classList.add('hidden');
             chatInput.classList.add('hidden');
             objectionLayer.classList.remove('hidden');
@@ -815,7 +811,7 @@ class SceneManager {
                 if (sprite.animationKey) {
                     return sprite.animationKey;
                 } else {
-                    return null; 
+                    return null;
                 }
             });
             scene.assets = await this.loadAssets([...characterKeys, ...animationKeys]);
@@ -1069,12 +1065,15 @@ class SceneManager {
 
         // Get the open chat button
         const openChatBtn = document.getElementById('open-chat-btn');
-        const chatModal = document.getElementById('chat-modal');
+        const hideChat = document.getElementById('hide-chat');
+        openChatBtn.classList.remove("hidden");
 
-        // Add a click event listener to the open chat button
-        openChatBtn.addEventListener('click', () => {
-            chatModal.classList.remove('hidden');
-        });
+        // Toggle chat sidebar when clicking the hide/show arrow
+        hideChat.addEventListener('click', toggleChatSidebar);
+
+        // Toggle chat sidebar when clicking the "Chat" button
+        openChatBtn.addEventListener('click', toggleChatSidebar);
+
     }
     handleSideSelection(selectedSide) {
         const side = selectedSide === 0 ? 'defence' : 'prosecution';
@@ -1320,17 +1319,17 @@ class SceneManager {
                 previewContainer.appendChild(imageCache[currentIndex]); // Show the first image
             });
 
-            previewContainer.addEventListener('mousedown', function() {
+            previewContainer.addEventListener('mousedown', function () {
                 this.ws.send(JSON.stringify({ type: 'sendPose', data: animationKey }));
             }.bind(this));
-             
+
             const overlayContainer = document.createElement('div');
             overlayContainer.classList.add('absolute', 'inset-0', 'flex', 'items-center', 'justify-center', 'bg-black', 'bg-opacity-0', 'hover:bg-opacity-50', 'transition-opacity', 'duration-300');
-             
+
             const title = document.createElement('h3');
             title.textContent = Object.keys(characterData.animations).find(key => JSON.stringify(characterData.animations[key]) === JSON.stringify(animationKey)); // Use the display name as title
             title.classList.add('text-white', 'text-sm', 'font-bold', 'z-10', 'opacity-0', 'hover:opacity-100', 'transition-opacity', 'duration-300');
-             
+
             overlayContainer.appendChild(title);
             previewContainer.appendChild(overlayContainer);
 
@@ -1576,6 +1575,24 @@ function hideSplashImage() {
     setTimeout(function () {
         document.getElementById('splash-container').classList.add('hidden');
     }, 500);
+}
+
+function toggleChatSidebar(forceHide = false) {
+    const chatSidebar = document.getElementById('chat-modal');
+    if (forceHide) {
+        hideChatSidebar();
+    } else {
+        chatSidebar.classList.toggle('translate-x-full');
+    }
+}
+
+function showChatSidebar() {
+    const chatSidebar = document.getElementById('chat-modal');
+    chatSidebar.classList.remove('translate-x-full');
+}
+function hideChatSidebar() {
+    const chatSidebar = document.getElementById('chat-modal');
+    chatSidebar.classList.add('translate-x-full');
 }
 
 const sceneManager = new SceneManager();

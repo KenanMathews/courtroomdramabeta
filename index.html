@@ -1,15 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Courtroom Drama</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
-      rel="stylesheet">
-    <style>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Courtroom Drama</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
     body {
       font-family: 'Press Start 2P', monospace;
     }
@@ -17,275 +15,256 @@
     .w-max-content {
       width: max-content;
     }
+
+    .transition {
+      transition: transform 0.3s ease-in-out;
+    }
   </style>
-  </head>
+</head>
 
-  <body class="m-0 p-0 overflow-hidden w-full h-full bg-gray-900 text-white">
-    <header class="bg-gray-800 py-4 px-6 flex justify-between items-center">
-      <div>
-        <h1 class="text-2xl font-bold">Courtroom Drama</h1>
-      </div>
-      <div class="text-white text-sm flex items-center">
-        <div id="game-roomName" class="mr-4"></div>
-        <div id="game-topicName"></div>
-        <button id="open-chat-btn" class="bg-blue-500 hover:bg-blue-600
-          text-white px-4 py-2 rounded-md ml-4">Chat</button>
-      </div>
-    </header>
+<body class="m-0 p-0 overflow-hidden w-full h-full bg-gray-900 text-white">
+  <header class="bg-gray-800 py-4 px-6 flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-bold">Courtroom Drama</h1>
+    </div>
+    <div class="text-white text-sm flex items-center">
+      <div id="game-roomName" class="mr-4"></div>
+      <div id="game-topicName"></div>
+      <button id="open-chat-btn" class="bg-blue-500 hover:bg-blue-600
+          text-white px-4 py-2 rounded-md ml-4 hidden">Chat</button>
+    </div>
+  </header>
 
-    <div class="flex flex-col items-center justify-center h-[calc(100vh-8rem)]">
-      <div class="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg shadow-lg
+  <div class="flex flex-col items-center justify-center h-[calc(100vh-8rem)]">
+    <div class="aspect-w-16 aspect-h-9 bg-gray-800 rounded-lg shadow-lg
         overflow-hidden relative max-w-[1200px]">
-        <div id="game-container" class="w-full h-full" data-mode="{{ mode }}"></div>
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2
+      <div id="game-container" class="w-full h-full" data-mode="{{ mode }}"></div>
+      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2
           -translate-y-1/2 z-10 space-y-4" id="userSelectionLayer">
-          <!-- Create and Join Room Buttons -->
-          <div id="roomManagementLayer" class="">
-            <input id="usernameInput" type="text" class="bg-gray-700 text-white
+        <!-- Create and Join Room Buttons -->
+        <div id="roomManagementLayer" class="">
+          <input id="usernameInput" type="text" class="bg-gray-700 text-white
               px-3 py-1 rounded-md mr-4" placeholder="Enter username...">
-            <div class="space-x-4 py-1">
-              <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2
+          <div class="space-x-4 py-1">
+            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2
                 rounded-md" id="createRoomBtn">Create Room</button>
-              <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2
+            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2
                 rounded-md hidden" id="joinRoomBtn">Join Room</button>
-            </div>
-            <!-- Room Selection Container -->
-            <div id="roomSelectionContainer" class="hidden">
-              <label for="roomSelect" class="text-white">Select a Room:</label>
-              <ul id="roomList" class="bg-white text-gray-900 px-4 py-2 rounded-md">
-              </ul>
-            </div>
-
+          </div>
+          <!-- Room Selection Container -->
+          <div id="roomSelectionContainer" class="hidden">
+            <label for="roomSelect" class="text-white">Select a Room:</label>
+            <ul id="roomList" class="bg-white text-gray-900 px-4 py-2 rounded-md">
+            </ul>
           </div>
 
-          <!-- Text or Speech to Text Selection Layer -->
-          <div id="textOrSpeechLayer" class="hidden">
-            <p class="text-white">Select Input Method:</p>
-            <div class="space-x-4">
-              <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2
+        </div>
+
+        <!-- Text or Speech to Text Selection Layer -->
+        <div id="textOrSpeechLayer" class="hidden">
+          <p class="text-white">Select Input Method:</p>
+          <div class="space-x-4">
+            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2
                 rounded-md" id="textInputBtn">Text</button>
-              <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2
+            <button class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2
                 rounded-md" id="speechToTextBtn">Speech to Text</button>
-            </div>
-          </div>
-
-          <!-- Side of the Court Selection Layer -->
-          <div id="courtSideSelectionLayer" class="hidden">
-            <p class="text-white">Select Your Side:</p>
-            <div class="space-x-4">
-              <button class="bg-green-500 hover:bg-green-600 text-white px-4
-                py-2 rounded-md" id="defenceBtn">defence</button>
-              <select class="bg-white text-gray-900 px-4 py-2 rounded-md"
-                id="defenceSelect">
-              </select>
-              <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2
-                rounded-md" id="prosecutionBtn">Prosecution</button>
-              <select class="bg-white text-gray-900 px-4 py-2 rounded-md"
-                id="prosecutionSelect">
-              </select>
-            </div>
-          </div>
-          <!-- Objection and Go Back buttons -->
-          <div id="objectionLayer" class="hidden">
-            <p class="text-white">Take Action:</p>
-            <div class="space-x-4">
-              <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2
-                rounded-md hidden" id="objectionBtn">Objection</button>
-              <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2
-                rounded-md" id="holdItBtn">Hold It</button>
-              <!-- <button class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md" id="goBackBtn">Go Back</button> -->
-            </div>
-          </div>
-
-          <!-- Cross-Examination and Go Back buttons -->
-          <div id="crossExaminationLayer" class="hidden">
-            <!-- <p class="text-white">Take Action:</p> -->
-            <div class="space-x-4">
-              <button class="bg-green-500 hover:bg-green-600 text-white px-4
-                py-2 rounded-md hidden" id="crossExaminationBtn">Cross-Examination</button>
-              <button class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2
-                rounded-md" id="goBackBtn">Go Back</button>
-            </div>
           </div>
         </div>
-        <div class="absolute bottom-0 left-0 w-full bg-black bg-opacity-75 p-4
+
+        <!-- Side of the Court Selection Layer -->
+        <div id="courtSideSelectionLayer" class="hidden">
+          <p class="text-white">Select Your Side:</p>
+          <div class="space-x-4">
+            <button class="bg-green-500 hover:bg-green-600 text-white px-4
+                py-2 rounded-md" id="defenceBtn">defence</button>
+            <select class="bg-white text-gray-900 px-4 py-2 rounded-md" id="defenceSelect">
+            </select>
+            <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2
+                rounded-md" id="prosecutionBtn">Prosecution</button>
+            <select class="bg-white text-gray-900 px-4 py-2 rounded-md" id="prosecutionSelect">
+            </select>
+          </div>
+        </div>
+        <!-- Objection and Go Back buttons -->
+        <div id="objectionLayer" class="hidden">
+          <p class="text-white">Take Action:</p>
+          <div class="space-x-4">
+            <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2
+                rounded-md hidden" id="objectionBtn">Objection</button>
+            <button class="bg-red-500 hover:bg-red-600 text-white px-4 py-2
+                rounded-md" id="holdItBtn">Hold It</button>
+            <!-- <button class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md" id="goBackBtn">Go Back</button> -->
+          </div>
+        </div>
+
+        <!-- Cross-Examination and Go Back buttons -->
+        <div id="crossExaminationLayer" class="hidden">
+          <!-- <p class="text-white">Take Action:</p> -->
+          <div class="space-x-4">
+            <button class="bg-green-500 hover:bg-green-600 text-white px-4
+                py-2 rounded-md hidden" id="crossExaminationBtn">Cross-Examination</button>
+            <button class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2
+                rounded-md" id="goBackBtn">Go Back</button>
+          </div>
+        </div>
+      </div>
+      <div class="absolute bottom-0 left-0 w-full bg-black bg-opacity-75 p-4
           hidden" id="text-bar">
-          <p class="text-white font-bold" id="characterName">Character Name</p>
-          <div class="mt-2">
-            <div class="w-full bg-transparent border border-gray-600 text-white
+        <p class="text-white font-bold" id="characterName">Character Name</p>
+        <div class="mt-2">
+          <div class="w-full bg-transparent border border-gray-600 text-white
               p-2">
-              <div contenteditable="true" id="novelTextBox" class="h-24
+            <div contenteditable="true" id="novelTextBox" class="h-24
                 overflow-y-auto w-full"></div>
-            </div>
           </div>
-          <div class="flex justify-between mt-4 hidden" id="objection-control">
-            <button id="fwd-btn">Backward</button>
-            <button id="bck-btn">Forward</button>
-          </div>
+        </div>
+        <div class="flex justify-between mt-4 hidden" id="objection-control">
+          <button id="fwd-btn">Backward</button>
+          <button id="bck-btn">Forward</button>
         </div>
       </div>
     </div>
+  </div>
 
-    <footer class="bg-gray-800 py-4 px-6 text-center">
-      <p>&copy; 2023 Courtroom Drama. All rights reserved.</p>
-    </footer>
+  <footer class="bg-gray-800 py-4 px-6 text-center">
+    <p>&copy; 2023 Courtroom Drama. All rights reserved.</p>
+  </footer>
 
-    <!-- Modal -->
-    <div id="modal" class="fixed z-10 inset-0 overflow-y-auto hidden">
-      <div class="flex items-center justify-center min-h-screen">
-        <div class="modal-overlay fixed inset-0 bg-black opacity-25"></div>
+  <!-- Modal -->
+  <div id="modal" class="fixed z-10 inset-0 overflow-y-auto hidden">
+    <div class="flex items-center justify-center min-h-screen">
+      <div class="modal-overlay fixed inset-0 bg-black opacity-25"></div>
 
-        <!-- Modal Content -->
-        <div class="modal-container bg-white w-full md:max-w-md mx-auto rounded
+      <!-- Modal Content -->
+      <div class="modal-container bg-white w-full md:max-w-md mx-auto rounded
           shadow-lg z-50 overflow-y-auto">
-          <div class="modal-content py-4 text-left px-6">
-            <!-- Title -->
-            <div class="mb-4">
-              <h1 class="text-2xl font-bold" id="modal-title">Modal Title</h1>
-            </div>
+        <div class="modal-content py-4 text-left px-6">
+          <!-- Title -->
+          <div class="mb-4">
+            <h1 class="text-2xl font-bold" id="modal-title">Modal Title</h1>
+          </div>
 
-            <!-- Input Field -->
-            <div class="mb-6">
-              <label for="input" class="block text-gray-700 text-sm font-bold
+          <!-- Input Field -->
+          <div class="mb-6">
+            <label for="input" class="block text-gray-700 text-sm font-bold
                 mb-2" id="modal-label"></label>
-              <input id="input" type="text" class="shadow appearance-none border
+            <input id="input" type="text" class="shadow appearance-none border
                 rounded w-full py-2 px-3
                 text-gray-700 leading-tight focus:outline-none
                 focus:shadow-outline" placeholder="Enter something...">
-            </div>
+          </div>
 
-            <!-- Submit Button -->
-            <div class="flex justify-end">
-              <button id="modal-submit" class="bg-blue-500 hover:bg-blue-600
+          <!-- Submit Button -->
+          <div class="flex justify-end">
+            <button id="modal-submit" class="bg-blue-500 hover:bg-blue-600
                 text-white font-bold py-2
                 px-4 rounded focus:outline-none focus:shadow-outline">Submit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="fixed inset-0 flex items-center justify-center z-50 hidden" id="nonamealert">
+    <!-- Modal backdrop -->
+    <div class="fixed inset-0 bg-gray-900 opacity-50"></div>
+
+    <!-- Modal container -->
+    <div class="bg-white p-6 rounded-lg shadow-xl z-50 text-center">
+      <!-- Error message -->
+      <div class="flex items-center justify-center mb-4">
+        <!-- Pixel graphics SVG -->
+        <svg class="h-8 w-8 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M3 3v18h18M9 9v6m0 0V9m0 6h6M9 15h6" />
+        </svg>
+        <!-- Error message text -->
+        <p class="text-red-600 font-semibold">No name entered</p>
+      </div>
+
+      <!-- Close button -->
+      <button class="px-4 py-2 bg-red-600 text-white rounded
+            hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+        onclick="closeNameAlertModal()">Close</button>
+    </div>
+  </div>
+
+  <!-- Note: Apply 'Press Start 2P' font-family to the body in CSS -->
+
+  <!-- Chat Sidebar -->
+  <div
+    class="fixed top-0 right-0 h-full bg-gray-800 text-white flex flex-col transition transform translate-x-full z-50"
+    id="chat-modal">
+    <div class="flex justify-between items-center bg-gray-700 p-4">
+      <h3 class="text-lg font-bold">Chat Window</h3>
+      <button id="hide-chat" class="text-2xl focus:outline-none">&#10005;</button>
+    </div>
+    <div class="flex-grow p-4 overflow-y-auto" id="chat-log"></div>
+    <div class="bg-gray-700 p-4">
+      <input id="chat-input" type="text"
+        class="border border-gray-600 rounded-lg p-2 w-full mb-4 bg-gray-800 text-white"
+        placeholder="Type your message...">
+      <div class="flex justify-between">
+        <div class="flex" id="chat-controls">
+          <button id="voice-btn"
+          class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="#ffffff" viewBox="0 0 24 24" stroke="none">
+            <path
+              d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z" />
+          </svg>
+          </button>
+          <button id="send-btn"
+            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 mr-2">Send</button>
+          <button id="stop-btn"
+            class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 mr-2">Dismiss</button>
+          <div id="popover-container" class="relative inline-block">
+            <button id="popover-btn"
+              class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50">Pose</button>
+            <div id="popover"
+              class="absolute z-10 bg-gray-900 rounded shadow-lg max-h-96 overflow-y-auto w-max-content right-0 -mt-52 -ml-64 hidden">
+              <div class="p-4">
+                <div class="grid grid-cols-3 gap-4" id="animation-pose"></div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="fixed inset-0 flex items-center justify-center z-50 hidden"
-      id="nonamealert">
-      <!-- Modal backdrop -->
-      <div class="fixed inset-0 bg-gray-900 opacity-50"></div>
+  </div>
 
-      <!-- Modal container -->
-      <div class="bg-white p-6 rounded-lg shadow-xl z-50 text-center">
-        <!-- Error message -->
-        <div class="flex items-center justify-center mb-4">
-          <!-- Pixel graphics SVG -->
-          <svg class="h-8 w-8 mr-2" xmlns="http://www.w3.org/2000/svg"
-            fill="none" viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              stroke-width="2"
-              d="M3 3v18h18M9 9v6m0 0V9m0 6h6M9 15h6" />
-            </svg>
-            <!-- Error message text -->
-            <p class="text-red-600 font-semibold">No name entered</p>
-          </div>
+  <!-- Popover Content -->
 
-          <!-- Close button -->
-          <button class="px-4 py-2 bg-red-600 text-white rounded
-            hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-            onclick="closeNameAlertModal()">Close</button>
-        </div>
-      </div>
-
-      <!-- Note: Apply 'Press Start 2P' font-family to the body in CSS -->
-
-      <div id="chat-modal" class="fixed z-10 inset-0 overflow-y-auto hidden">
-        <div class="flex items-center justify-center min-h-screen">
-          <div class="modal-overlay fixed inset-0 bg-black opacity-25"></div>
-          <!-- Modal Content -->
-          <div class="modal-container bg-white w-full md:max-w-2xl mx-auto
-            rounded shadow-lg z-50">
-            <div class="modal-content py-4 text-left px-6">
-              <!-- Title -->
-              <div class="mb-2">
-                <h1 class="text-lg font-bold text-black" id="modal-title">Chat
-                  Window</h1>
-              </div>
-              <!-- Chat Log -->
-              <div id="chat-log" class="text-black mb-4 min-h-[200px]
-                overflow-y-auto w-full border rounded px-4 py-2"></div>
-              <!-- Message Input Field -->
-              <div class="mb-4">
-                <input id="chat-input" type="text" class="shadow appearance-none
-                  border rounded w-full py-2 px-3 text-gray-700 leading-tight
-                  focus:outline-none focus:shadow-outline" placeholder="Type your message...">
-              </div>
-              <!-- Send Button -->
-              <div class="flex justify-end pr-6 pb-6" id="chat-controls">
-                <button id="voice-btn" class="bg-blue-500 hover:bg-blue-600
-                  text-white font-bold py-2 px-4 rounded-full focus:outline-none
-                  focus:shadow-outline disabled:opacity-50 mr-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6"
-                    fill="#ffffff" viewBox="0 0 24 24" stroke="none">
-                    <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15
-                      5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3
-                      3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72
-                      6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z" />
-                    </svg>
-                  </button>
-                  <button id="send-btn" class="bg-blue-500 hover:bg-blue-600
-                    text-white font-bold py-1 px-2 rounded focus:outline-none
-                    focus:shadow-outline disabled:opacity-50 mr-2">Send</button>
-                  <button id="stop-btn" class="bg-red-500 hover:bg-red-600
-                    text-white font-bold py-1 px-2 rounded focus:outline-none
-                    focus:shadow-outline disabled:opacity-50 mr-2">Dismiss</button>
-                  <div id="popover-container" class="relative inline-block">
-                    <button id="popover-btn" class="bg-gray-500
-                      hover:bg-gray-600 text-white font-bold py-1 px-2 rounded
-                      focus:outline-none focus:shadow-outline
-                      disabled:opacity-50">Pose</button>
-                    <div id="popover" class="absolute z-10 bg-gray-900 rounded
-                      shadow-lg max-h-96 overflow-y-auto w-max-content hidden">
-                      <div class="p-4">
-                        <div class="grid grid-cols-3 gap-4" id="animation-pose">
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Popover Content -->
-
-        <!-- Include the Two.js library -->
-        <script
-          src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.0.4/pixi.min.js"></script>
-        <div id="messages" class="text-gray-400 mt-4"></div>
-        <!-- Loading Overlay -->
-        <div id="loading-overlay" class="fixed inset-0 flex items-center
+  <!-- Include the Two.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.0.4/pixi.min.js"></script>
+  <div id="messages" class="text-gray-400 mt-4"></div>
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="fixed inset-0 flex items-center
           justify-center z-50 bg-gray-900 bg-opacity-75">
-          <div class="text-white animate-pulse" id="loading-message">
-            Loading...
-          </div>
-        </div>
-        <!-- Full-screen alert -->
-        <div id="full-screen-alert" class="fixed inset-0 flex items-center
+    <div class="text-white animate-pulse" id="loading-message">
+      Loading...
+    </div>
+  </div>
+  <!-- Full-screen alert -->
+  <div id="full-screen-alert" class="fixed inset-0 flex items-center
           justify-center z-50 bg-gray-900 bg-opacity-75 hidden">
-          <div class="alert bg-gray-800 border border-gray-600 rounded-lg
+    <div class="alert bg-gray-800 border border-gray-600 rounded-lg
             shadow-lg" style="width: 80%">
-            <div class="chat-box py-2 px-4">
-              <div class="flex items-center mb-2">
-                <p class="text-sm font-bold text-gray-300" id="objection-uname"></p>
-                <p class="text-xs text-gray-500 ml-auto" id="objection-time"></p>
-              </p>
-            </div>
-            <p class="text-lg" id="objection-message"></p>
-          </div>
+      <div class="chat-box py-2 px-4">
+        <div class="flex items-center mb-2">
+          <p class="text-sm font-bold text-gray-300" id="objection-uname"></p>
+          <p class="text-xs text-gray-500 ml-auto" id="objection-time"></p>
+          </p>
         </div>
+        <p class="text-lg" id="objection-message"></p>
       </div>
-      <div id="splash-container" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-0 transition-opacity duration-500 opacity-0 hidden">
-        <img id="splash-image" class="max-w-full max-h-full" src="" alt="Hold it">
-      </div>
-      <!-- Include your custom script -->
-      <script src="test2.js"></script>
-    </body>
+    </div>
+  </div>
+  <div id="splash-container"
+    class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-0 transition-opacity duration-500 opacity-0 hidden">
+    <img id="splash-image" class="max-w-full max-h-full" src="" alt="Hold it">
+  </div>
+  <!-- Include your custom script -->
+  <script src="test2.js"></script>
+</body>
 
-  </html>
+</html>
