@@ -280,7 +280,7 @@ class SceneManager {
         this.sceneNames = [];
         this.currentIndex = 0;
         this.intervalId = null;
-        this.ws = new WebSocket('ws://localhost:8001/'); // Connect to the WebSocket server
+        this.ws = new WebSocket('wss://courtroomdramabeta.onrender.com/'); // Connect to the WebSocket server
         this.setupWebSocketHandlers();
         this.roomName = null;
         this.roomInfo = {};
