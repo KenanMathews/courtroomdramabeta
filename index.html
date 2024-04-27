@@ -145,7 +145,7 @@
           </div>
 
           <!-- Input Field -->
-          <div class="mb-6">
+          <div class="mb-4">
             <label for="input" class="block text-gray-700 text-sm font-bold
                 mb-2" id="modal-label"></label>
             <input id="input" type="text" class="shadow appearance-none border
@@ -193,7 +193,7 @@
 
   <!-- Chat Sidebar -->
   <div
-    class="fixed top-0 right-0 h-full bg-gray-800 text-white flex flex-col transition transform translate-x-full z-50"
+    class="fixed top-0 right-0 h-full bg-gray-800 text-white flex flex-col transition transform translate-x-full z-50 w-2/5"
     id="chat-modal">
     <div class="flex justify-between items-center bg-gray-700 p-4">
       <h3 class="text-lg font-bold">Chat Window</h3>
@@ -204,17 +204,37 @@
       <input id="chat-input" type="text"
         class="border border-gray-600 rounded-lg p-2 w-full mb-4 bg-gray-800 text-white"
         placeholder="Type your message...">
-      <div class="flex justify-between">
+      <div class="flex justify-between float-right">
         <div class="flex" id="chat-controls">
           <button id="voice-btn"
-          class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="#ffffff" viewBox="0 0 24 24" stroke="none">
-            <path
-              d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z" />
-          </svg>
+            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="#ffffff" viewBox="0 0 24 24" stroke="none">
+              <path
+                d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z" />
+            </svg>
           </button>
-          <button id="send-btn"
-            class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 mr-2">Send</button>
+          <div class="relative flex text-left pr-2">
+            <button id="send-btn"
+              class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 ml-2">
+              Send
+            </button>
+            <div class="relative">
+              <button id="dropdown-btn"
+                class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              <div id="dropdown-menu"
+                class="absolute z-10 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none -mt-20 -ml-40 hidden">
+                <button id="generate-btn"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 w-full text-left">
+                  AI Assistant
+                </button>
+              </div>
+            </div>
+          </div>
           <button id="stop-btn"
             class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 mr-2">Dismiss</button>
           <div id="popover-container" class="relative inline-block">
@@ -259,9 +279,45 @@
       </div>
     </div>
   </div>
+  <div id="ai-modal" class="fixed inset-y-0 left-0 z-10 w-full md:w-2/5 overflow-y-auto hidden">
+    <!-- Modal container -->
+    <div class="bg-gray-800 text-white w-full h-full md:max-w-md rounded shadow-lg z-50 overflow-y-hidden flex flex-col justify-between">
+        <div class="text-left px-6 flex-grow">
+            <div class="mb-4 flex justify-between items-center">
+                <h3 class="text-2xl font-bold mt-2">AI Assistant</h3>
+                <button id="ai-close-button" class="text-gray-300 hover:text-gray-400 focus:outline-none">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div id="ai-text-list" class="mb-6 flex-grow overflow-hidden">
+                <ul id="ai-chat-log" class="border border-gray-700 rounded p-2 text-xs overflow-y-auto" style="height: calc(100vh - 14rem);"></ul>
+            </div>
+        </div>
+        <div class="bg-gray-700 p-4">
+            <div class="mb-6">
+                <label for="ai-input" class="block text-gray-300 text-sm font-bold mb-2">Enter something:</label>
+                <input id="ai-input" type="text" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-300 leading-tight focus:outline-none focus:shadow-outline bg-gray-700" placeholder="Enter your request...">
+            </div>
+            <div class="flex items-center">
+                <button id="ai-submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Submit</button>
+                <div class="text-gray-400 text-xs">
+                  Powered by Claude AI
+              </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+
+
+
+
   <div id="splash-container"
     class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-0 transition-opacity duration-500 opacity-0 hidden">
     <img id="splash-image" class="max-w-full max-h-full" src="" alt="Hold it">
+  </div>
+  <div id="notification-box" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white py-2 px-4 rounded-lg shadow-md transition duration-500 ease-in-out opacity-0 pointer-events-none">
   </div>
   <!-- Include your custom script -->
   <script src="test2.js"></script>

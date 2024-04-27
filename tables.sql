@@ -3,12 +3,15 @@ DROP TABLE IF EXISTS chat_messages CASCADE;
 DROP TABLE IF EXISTS rooms CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS user_actions CASCADE;
-CREATE TABLE
-  users (
+DROP TABLE IF EXISTS ai_chat_boxes CASCADE;
+DROP TABLE IF EXISTS ai_chat_messages CASCADE;
+
+CREATE TABLE users (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     username TEXT NOT NULL,
-    auth_user_id UUID REFERENCES auth.users (id) -- Foreign key reference
-  );
+    auth_user_id UUID REFERENCES auth.users (id), -- Foreign key reference
+    is_bot BOOLEAN DEFAULT FALSE
+);
 CREATE TABLE
   rooms (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
@@ -36,3 +39,18 @@ CREATE TABLE user_room_association (
     room_id BIGINT REFERENCES rooms(id),
     PRIMARY KEY (user_id, room_id)
 );
+CREATE TABLE IF NOT EXISTS ai_chat_boxes (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    room_id BIGINT NOT NULL REFERENCES rooms(id),
+    user_id BIGINT NOT NULL REFERENCES users(id),
+    name TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS ai_chat_messages (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    ai_chat_box_id BIGINT NOT NULL REFERENCES ai_chat_boxes(id),
+    user_id BIGINT NOT NULL REFERENCES users(id),
+    message TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+

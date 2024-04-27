@@ -11,7 +11,6 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Global middleware function to block database updates during playback
 const blockDatabaseUpdates = (func) => async (...args) => {
-  console.log(getPlaybackState())
     if (getPlaybackState()) {
       // Skip the database update during playback
       return null;
@@ -144,36 +143,141 @@ async function fetchActionAndMessages(roomName) {
       throw error;
     }
   }
-  async function getRoomDetails(roomId) {
+  async function getAIChatBoxIdFromRoom(roomId, userId) {
+    try {
+      const { data } = await supabase
+        .from('ai_chat_boxes')
+        .select('id')
+        .eq('room_id', roomId)
+        .eq('user_id', userId)
+        .single();
+  
+      return data ? data.id : null; // Return the AI chat box ID or null if not found
+    } catch (error) {
+      console.error('Error fetching AI chat box ID:', error);
+      return null;
+    }
+  }
+
+  async function createAIChatBox(roomId, userId, name) {
     try {
       const { data, error } = await supabase
-        .from('rooms')
-        .select(`
-          *,
-          user_room_association:user_room_association(
-            user_id,
-            users:users(username)
-          )
-        `)
-        .eq('id', roomId)
+        .from('ai_chat_boxes')
+        .insert([{ room_id: roomId, user_id: userId, name: name }])
+        .select("id")
         .single();
   
       if (error) {
-        console.error('Error fetching room details:', error);
+        console.error('Error creating AI chat box:', error);
         return null;
       }
   
       if (!data) {
-        console.error('Error fetching room details: Data is null');
+        console.error('Error creating AI chat box: Data is null');
         return null;
       }
   
-      return data;
+      return data.id; // Return the ID of the created AI chat box
     } catch (error) {
-      console.error('Error fetching room details:', error);
+      console.error('Error creating AI chat box:', error);
       return null;
     }
   }
+  async function getAIChatLog(aiChatBoxId) {
+    try {
+      const { data, error } = await supabase
+        .from('ai_chat_messages')
+        .select(`*,users!inner(username,is_bot)`)
+        .eq('ai_chat_box_id', aiChatBoxId)
+  
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching AI chat log:', error);
+      return [];
+    }
+  }
+
+  async function storeAIChatMessage(aiChatBoxId, userId, message) {
+    try {
+      const { data, error } = await supabase
+        .from('ai_chat_messages')
+        .insert([{ ai_chat_box_id: aiChatBoxId, user_id: userId, message: message }])
+        .select('id')
+        .single();
+  
+      if (error) {
+        console.error('Error storing AI chat message:', error);
+        return null;
+      }
+  
+      if (!data) {
+        console.error('Error storing AI chat message: Data is null');
+        return null;
+      }
+  
+      return data.id; // Return the ID of the stored message
+    } catch (error) {
+      console.error('Error storing AI chat exception:', error);
+      return null;
+    }
+  }
+  
+  async function updateAIChatMessage(messageId, updatedMessage) {
+    try {
+        const { data, error } = await supabase
+            .from('ai_chat_messages')
+            .update({ message: updatedMessage })
+            .eq('id', messageId)
+            .single();
+
+        if (error) {
+            console.error('Error updating AI chat message:', error);
+            return false;
+        }
+
+        return true; // Return true indicating successful update
+    } catch (error) {
+        console.error('Error updating AI chat message:', error);
+        return false;
+    }
+}
+
+const findOrCreateBot = async () => {
+  try {
+      // Check if the bot already exists
+      const { data: existingBot, error: findError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('username', 'AI Assistant')
+          .single();
+
+
+      if (existingBot) {
+          return existingBot.id;
+      }
+      if (findError) {
+        console.error('Error finding bot:', findError);
+        console.log('Creating bot......');
+      }
+
+
+      // If the bot doesn't exist, create it
+      const botId = await generateUniqueId('AI Assistant');
+      
+      // Update the newly created user as a bot
+      await supabase
+          .from('users')
+          .update({ is_bot: true })
+          .eq('id', botId);
+
+      return botId;
+  } catch (error) {
+      console.error('Error finding or creating bot:', error);
+      throw error;
+  }
+};
+
 
 module.exports = {
   generateUniqueId,
@@ -182,5 +286,10 @@ module.exports = {
   storeUserAction,
   updateUserRoom,
   fetchActionAndMessages,
-  getRoomDetails,
+  getAIChatBoxIdFromRoom,
+  createAIChatBox,
+  getAIChatLog,
+  storeAIChatMessage,
+  updateAIChatMessage,
+  findOrCreateBot,
 };

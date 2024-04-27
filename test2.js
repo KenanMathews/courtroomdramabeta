@@ -414,6 +414,7 @@ class SceneManager {
                         this.updateSceneWithRoomInfo(roomInfo);
                         this.switchScene(data.side);
                         this.handleChatBox();
+                        closeAIModal();
                         break;
                     case 'holditChatLog':
                         this.handleHolditChatLog(data);
@@ -422,12 +423,14 @@ class SceneManager {
                         showSplashImage('assets/splash/holdit.png');
                         this.updateSceneWithRoomInfo(roomInfo);
                         this.handleHolditforUsers(data);
+                        closeAIModal();
                         console.log('Holdit triggered');
                         break;
                     case 'objectionTriggered':
                         showSplashImage('assets/splash/objection.png');
                         this.updateSceneWithRoomInfo(roomInfo);
                         this.handleObjectionforUsers(data);
+                        closeAIModal();
                         console.log('Holdit triggered');
                         break;
                     case 'waitingPlayer':
@@ -438,6 +441,12 @@ class SceneManager {
                         break;
                     case 'loadPose':
                         this.loadAnimations(data.side, data.characterKey, data.animation)
+                        break;
+                    case 'generatedText':
+                        this.updateMessageInChatLog(data.messageId, data.message);
+                        break;
+                    case 'generationComplete':
+                        this.updateAIChatLog(data.chatLog);
                         break;
                     default:
                         console.log('Unsupported WebSocket message type:', type);
@@ -561,13 +570,10 @@ class SceneManager {
             chatControls.classList.remove('hidden');
             chatInput.classList.remove('hidden');
             objectionLayer.classList.add('hidden');
-
         } else {
             chatControls.classList.add('hidden');
             chatInput.classList.add('hidden');
             objectionLayer.classList.remove('hidden');
-
-
         }
         // Add chat message event listeners if not already added
         if (!this.chatEventListenersAdded) {
@@ -579,7 +585,7 @@ class SceneManager {
             });
 
             stopBtn.addEventListener('click', () => {
-                this.ws.send(JSON.stringify({ type: 'switchSpeaker' }));
+                this.ws.send(JSON.stringify({ type: 'switch_speaker' }));
             });
 
             voiceBtn.addEventListener('click', () => {
@@ -657,6 +663,92 @@ class SceneManager {
             bufferMessage(lastMessage);
         }
     }
+    // JavaScript code to copy message content into clipboard and show alert
+    copyToClipboard(messageContent) {
+        navigator.clipboard.writeText(messageContent).then(function () {
+            const customHTML = '<p class="text-center">Message copied to clipboard!</p>';
+            showNotification(customHTML);
+        }, function (err) {
+            console.error('Error copying message: ', err);
+        });
+    }
+
+    // JavaScript code to update AI chat log
+    updateAIChatLog(chatLog) {
+        const chatList = document.getElementById('ai-chat-log');
+
+        // Clear previous content
+        chatList.innerHTML = '';
+
+        // Populate chat log
+        chatLog.forEach(message => {
+            const listItem = document.createElement('li');
+            listItem.classList.add('mb-2', 'relative'); // Add relative positioning
+
+            // Set messageId attribute
+            listItem.setAttribute('data-messageId', message.id);
+            const is_bot = message.is_bot?"":"hidden";
+            const messageContent = `
+            <p class="font-bold">${message.user}</p>
+            <p>${message.message}</p>
+            <p class="text-xs text-gray-500">${formatTimestamp(message.timestamp)}</p>
+            <button class="absolute top-0 right-0 mt-1 mr-1 text-gray-500 focus:outline-none ${is_bot}" style="background-color: transparent; border: none;"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 5a2 2 0 012-2h5a2 2 0 012 2v2h2a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2h2V5zM4 9v9h12V9H4z" clip-rule="evenodd"/></svg></button>
+        `;
+
+            listItem.innerHTML = messageContent;
+            chatList.appendChild(listItem);
+
+            // Add click event listener to copy button
+            listItem.querySelector('button').addEventListener('click',  ()=> {
+                const messageText = message.message;
+                this.copyToClipboard(messageText);
+            });
+        });
+    }
+
+    // JavaScript code to update message in chat log
+    updateMessageInChatLog(messageId, newMessage) {
+        let listItem = document.querySelector(`[data-messageId="${messageId}"]`);
+        if (listItem) {
+            const messageContent = `
+            <p class="font-bold">${newMessage.user}</p>
+            <p>${newMessage.message}</p>
+            <p class="text-xs text-gray-500">${formatTimestamp(newMessage.timestamp)}</p>
+            <button class="absolute top-0 right-0 mt-1 mr-1 text-gray-500 focus:outline-none" style="background-color: transparent; border: none;"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 5a2 2 0 012-2h5a2 2 0 012 2v2h2a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2h2V5zM4 9v9h12V9H4z" clip-rule="evenodd"/></svg></button>
+        `;
+            listItem.innerHTML = messageContent;
+
+            // Add click event listener to copy button
+            listItem.querySelector('button').addEventListener('click',  ()=> {
+                const messageText = newMessage.message;
+                this.copyToClipboard(messageText);
+            });
+        } else {
+            // Create new list item
+            
+            listItem = document.createElement('li');
+            listItem.classList.add('mb-2', 'relative'); // Add relative positioning
+            listItem.setAttribute('data-messageId', messageId);
+            const messageContent = `
+            <p class="font-bold">${newMessage.user}</p>
+            <p>${newMessage.message}</p>
+            <p class="text-xs text-gray-500">${formatTimestamp(newMessage.timestamp)}</p>
+            <button class="absolute top-0 right-0 mt-1 mr-1 text-gray-500 focus:outline-none" style="background-color: transparent; border: none;"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 5a2 2 0 012-2h5a2 2 0 012 2v2h2a2 2 0 012 2v9a2 2 0 01-2 2H4a2 2 0 01-2-2V9a2 2 0 012-2h2V5zM4 9v9h12V9H4z" clip-rule="evenodd"/></svg></button>
+        `;
+            listItem.innerHTML = messageContent;
+
+            // Append new message at the bottom of chat log
+            const chatList = document.getElementById('ai-chat-log');
+            chatList.appendChild(listItem);
+
+            // Add click event listener to copy button
+            listItem.querySelector('button').addEventListener('click', ()=> {
+                const messageText = newMessage.message;
+                this.copyToClipboard(messageText);
+            });
+        }
+    }
+
 
     async handleUpdateScene(sceneData) {
         const { name, backgroundPath, spritesData, objectsData } = sceneData;
@@ -1055,7 +1147,7 @@ class SceneManager {
 
         const holdItBtn = document.getElementById('holdItBtn');
         holdItBtn.addEventListener('click', () => {
-            this.ws.send(JSON.stringify({ type: 'holdIt', id: document.getElementById('novelTextBox').id }));
+            this.ws.send(JSON.stringify({ type: 'holdit', id: document.getElementById('novelTextBox').id }));
         });
 
         const crossExaminationBtn = document.getElementById('crossExaminationBtn');
@@ -1069,16 +1161,48 @@ class SceneManager {
         openChatBtn.classList.remove("hidden");
 
         // Toggle chat sidebar when clicking the hide/show arrow
-        hideChat.addEventListener('click', toggleChatSidebar);
+        hideChat.addEventListener('click', ()=>toggleChatSidebar(true));
 
         // Toggle chat sidebar when clicking the "Chat" button
-        openChatBtn.addEventListener('click', toggleChatSidebar);
+        openChatBtn.addEventListener('click', ()=>toggleChatSidebar());
+
+        const dropdownbtn = document.getElementById("dropdown-btn");
+
+        dropdownbtn.addEventListener("click", function () {
+            var dropdownMenu = document.getElementById("dropdown-menu");
+            dropdownMenu.classList.toggle("hidden");
+        });
+
+        const generatebtn = document.getElementById("generate-btn");
+        generatebtn.addEventListener("click", () => {
+            hideChatSidebar();
+            document.getElementById('ai-modal').classList.remove('hidden');
+        });
+        document.querySelectorAll('#ai-modal .modal-close').forEach(function (el) {
+            el.addEventListener('click', function () {
+                document.getElementById('ai-modal').classList.add('hidden');
+            });
+        });
+
+        const aiSubmitBtn = document.getElementById('ai-submit');
+        aiSubmitBtn.addEventListener('click', () => {
+            var userInput = document.getElementById('ai-input').value;
+            document.getElementById('ai-input').value = "";
+            this.ws.send(JSON.stringify({ type: 'generate', data: userInput }));
+        });
+        // Get the close button element
+        const aiCloseButton = document.getElementById('ai-close-button');
+
+        // Add click event listener to close button
+        aiCloseButton.addEventListener('click', function() {
+            closeAIModal();
+        });
 
     }
     handleSideSelection(selectedSide) {
         const side = selectedSide === 0 ? 'defence' : 'prosecution';
         const characterKey = selectedSide === 0 ? document.getElementById("defenceSelect").value : document.getElementById("prosecutionSelect").value;
-        this.ws.send(JSON.stringify({ type: 'selectSide', data: { side: side, spriteKey: characterKey }, roomName: sceneManager.roomName }));
+        this.ws.send(JSON.stringify({ type: 'select_side', data: { side: side, spriteKey: characterKey }, roomName: sceneManager.roomName }));
     }
     loadRoomData() {
         // const witnessMode = document.getElementById('witnessMode').checked;
@@ -1320,7 +1444,7 @@ class SceneManager {
             });
 
             previewContainer.addEventListener('mousedown', function () {
-                this.ws.send(JSON.stringify({ type: 'sendPose', data: animationKey }));
+                this.ws.send(JSON.stringify({ type: 'change_pose', data: animationKey }));
             }.bind(this));
 
             const overlayContainer = document.createElement('div');
@@ -1594,7 +1718,22 @@ function hideChatSidebar() {
     const chatSidebar = document.getElementById('chat-modal');
     chatSidebar.classList.add('translate-x-full');
 }
+function showNotification(htmlContent) {
+    const notificationBox = document.getElementById('notification-box');
+    notificationBox.innerHTML = htmlContent;
+    notificationBox.classList.remove('opacity-0', 'pointer-events-none');
+    notificationBox.classList.add('opacity-100', 'pointer-events-auto');
 
+    setTimeout(function() {
+        notificationBox.classList.remove('opacity-100', 'pointer-events-auto');
+        notificationBox.classList.add('opacity-0', 'pointer-events-none');
+    }, 2000);
+}
+
+function closeAIModal(){
+    const aiModal = document.getElementById('ai-modal');
+    aiModal.classList.add('hidden');
+}
 const sceneManager = new SceneManager();
 sceneManager.loadScenes();
 sceneManager.loadEvents();

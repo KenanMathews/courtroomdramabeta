@@ -1,8 +1,7 @@
 const WebSocket = require('ws');
-const { generateUniqueId, storeRoomInfo, updateUserRoom, storeChatMessage, storeUserAction,fetchActionAndMessages, getRoomDetails } = require('./supabase');
+const { generateUniqueId, storeRoomInfo, updateUserRoom,fetchActionAndMessages} = require('./supabase');
 const { setPlaybackState } = require('./gameState');
-
-
+const { handleRoomAction, getRoomInfo, broadcastToRoom } = require('./handleRoomAction');
 // Map to store the active rooms
 const rooms = new Map();
 
@@ -25,7 +24,8 @@ async function createRoom(roomName, name, ws) {
     isInObjectionState: false,
     audioUrl: 'assets/audio/coutroom.mp3',
     id: null,
-    roomAssets: {}
+    roomAssets: {},
+    isActive: false,
   };
 
   try {
@@ -110,8 +110,7 @@ async function joinRoom(roomName, name, ws) {
     } else {
       return { success: false, error: 'Room is full' };
     }
-
-    return { success: true, roomInfo: getRoomInfo(roomName), spriteKey:ws.spriteKey };
+    return { success: true, roomInfo: getRoomInfo(room), spriteKey:ws.spriteKey };
   } catch (error) {
     console.error('Error joining room:', error);
     return { success: false, error: 'Error joining room' };
@@ -120,7 +119,7 @@ async function joinRoom(roomName, name, ws) {
 function getOpenRooms() {
   const singleClientRooms = [];
   for (const [roomName, room] of rooms) {
-    if (room.clients.size === 1) {
+    if (room.isActive && room.clients.size === 1) {
       singleClientRooms.push({name:roomName, count:room.clients.size});
     }
   }
@@ -138,166 +137,29 @@ function handleMessage(room, type, data, userData) {
       room.mode = data;
       broadcastToRoom(room, JSON.stringify({ type: "modeSet", data: data }));
       break;
-    case 'selectSide':
-      handleSelectSide(room, data, userData);
-      break;
     case 'objection':
-      handleObjection(room, userData, data);
-      break;
-    case 'holdIt':
-      handleHoldIt(room,userData);
+    case 'holdit':
+    case 'switch_speaker':
+    case 'chatMessage':
+    case 'change_pose':
+    case 'select_side':
+    case 'generate':
+      handleRoomAction(room, type, data, userData);
       break;
     case 'crossExamination':
-      // handleCrossExamination(ws);
       broadcastToRoom(room, JSON.stringify({ type: 'crossExaminationTriggered' }));
       break;
     case 'changeScene':
       return changeScene(data);
-    case 'chatMessage':
-      handleChatMessage(room, data, userData);
-      break;
-    case 'switchSpeaker':
-      handleSwitchSpeaker(room);
-      break;
-    case 'sendPose':
-      handleLoadPose(room,data,userData);
+    case 'replay':
+      replayRoom(room);
       break;
     default:
       console.log('Unsupported message type:', type);
   }
 }
 
-async function handleObjection(room,userData, messageid) {
-  room.audioUrl = '/assets/audio/objection.mp3';
-  room.effectUrl = '/assets/audio/pw/objection.wav';
-  try {
-    const actionId = await storeUserAction(room.id, userData.userId, 'objection', {id:messageid});
-    room.previousObjectionIndex = room.objectionIndex || 0;
-    const tempMessage = room.chatInfo.chatLog.find(message => message.id == messageid);
-    const objectionData = { type: 'objectionTriggered', data: { userId: userData.userId, userName: userData.name, message: tempMessage }, roomInfo: getRoomInfo(room.name) };
-    broadcastToRoom(room, JSON.stringify(objectionData));
-    broadcastToRoom(room, JSON.stringify({ type: 'showChatBox', roomInfo: getRoomInfo(room.name) }))
-    room.effectUrl = '';
-  } catch (error) {
-    console.error('Error handling objection:', error);
-  }
-}
 
-async function handleHoldIt(room,userData){
-  room.isInObjectionState = true;
-  room.audioUrl = '/assets/audio/objection.mp3';
-  room.effectUrl = '/assets/audio/pw/holdit.wav';
-  try {
-    const actionId = await storeUserAction(room.id, userData.userId, 'holdit', {});
-    room.previousObjectionIndex = room.objectionIndex || 0;
-    room.objectionIndex = room.chatInfo.chatLog.length;
-    const speakerMessages = room.chatInfo.chatLog.slice(room.previousObjectionIndex, room.objectionIndex).filter(message => message.user_id === room.speaker.user_id);
-    const speakerMessagesData = { type: 'holditChatLog', data: speakerMessages };
-    sendDataToListener(room, JSON.stringify(speakerMessagesData));
-    const holditData = { type: 'holdItTriggered', data: { userId: userData.userId, userName: userData.name }, roomInfo: getRoomInfo(room.name) };
-    broadcastToRoom(room, JSON.stringify(holditData));
-  } catch (error) {
-    console.error('Error handling objection:', error);
-  }
-}
-
-
-function handleSwitchSpeaker(room, user) {
-  const clientsArray = Array.from(room.clients);
-  const newSpeaker = clientsArray.find(client => client !== room.speaker);
-  
-  if (newSpeaker) {
-    const tempSpeaker = room.speaker;
-    room.speaker = newSpeaker;
-    room.listener = tempSpeaker;
-    
-    const actionId = storeUserAction(room.id, room.speaker.user_id, 'switch_speaker', { newSpeakerId: newSpeaker.user_id });
-    
-    broadcastToRoom(room, JSON.stringify({ type: 'speakerSwitched', data: { userName: newSpeaker.user_name, side: room.speaker.side }, roomInfo: getRoomInfo(room.name) }));
-  }
-}
-
-async function handleChatMessage(room, message, userData) {
-  const currentTime = new Date();
-  const currentTimeInMinutes = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), currentTime.getHours(), currentTime.getMinutes()).getTime();
-
-  const messageId = await storeChatMessage(room.id, userData.userId, message, currentTime);
-  
-  if (messageId === null) {
-    console.error('Error storing chat message.');
-    return;
-  }
-  const tempMessage = {
-    id: messageId,
-    user_id: userData.userId,
-    user: userData.name,
-    message: message,
-    timestamp: currentTimeInMinutes,
-  };
-
-  room.chatInfo.chatLog.push(tempMessage);
-  room.chatInfo.lastMessageTime = currentTime;
-
-  if (messageId !== null) {
-    broadcastToRoom(room, JSON.stringify({ type: 'chatMessage', data: { message, timestamp: currentTime, user: userData.name, id: messageId }, roomInfo: getRoomInfo(room.name) }));
-  }
-}
-
-
-function handleLoadPose(room, data, userData) {
-  const actionId = storeUserAction(room.id, userData.userId, 'change_pose', { animation: data});
-  broadcastToRoom(room, JSON.stringify({ type: 'loadPose', data: { side:userData.side, animation:data, characterKey:userData.spriteKey }, roomInfo: getRoomInfo(room.name) }));
-}
-
-async function handleSelectSide(room, data, userData) {
-  let side = data.side;
-  let spriteKey = data.spriteKey;
-  const user = [...room.clients].find(client => client.user_id === userData.userId); // Finding the user in the room
-
-  if (!user) {
-    console.error('User not found in the room');
-    return;
-  }
-
-  user.side = side;
-  user.spriteKey = spriteKey;
-
-  room.audioUrl = '/assets/audio/questioning.mp3';
-  const actionId = await storeUserAction(room.id, user.user_id, 'select_side', { side }); // Storing user action
-  broadcastToRoom(room, JSON.stringify({ type: 'sideSelected', data: { side, spriteKey }, name: user.user_name })); // Broadcasting side selection with spriteKey
-  broadcastToRoom(room, JSON.stringify({ type: 'showChatBox', roomInfo: getRoomInfo(room.name) }));
-
-  if (room.clients.size != 2) {
-    broadcastToRoom(room, JSON.stringify({ type: 'waitingPlayer' }));
-  } 
-}
-
-function getRoomInfo(roomName) {
-  const room = rooms.get(roomName);
-
-  if (!room) {
-    return null;
-  }
-  const users = [...room.clients].map(client => ({
-    userId: client.user_id,
-    name: client.user_name,
-    spriteKey: client.spriteKey,
-    side: client.side,
-    isSpeaker: client === room.speaker
-  }));
-  
-  const speakerSide = room.speaker ? room.speaker.side : null;
-
-  return {
-    name: roomName,
-    users: users,
-    speaker: room.speaker ? room.speaker.user_name : null,
-    speakerSide: speakerSide,
-    chatInfo: room.chatInfo,
-    audioUrl: room.audioUrl,
-    effectUrl: room.effectUrl
-  };
-}
 
 // Function to process WebSocket messages
 async function processMessage(ws, message) {
@@ -307,7 +169,7 @@ async function processMessage(ws, message) {
       case 'createRoom':
         const room = await createRoom(roomName, name, ws);
         if (room) {
-          return JSON.stringify({ type: 'roomCreated', data: roomName, roomInfo: getRoomInfo(roomName) });
+          return JSON.stringify({ type: 'roomCreated', data: roomName, roomInfo: getRoomInfo(room) });
         }
       case 'joinRoom':
         const response = await joinRoom(roomName, name, ws);
@@ -316,8 +178,6 @@ async function processMessage(ws, message) {
         } else {
           return JSON.stringify({ type: 'error', data: `Room "${roomName}" not found.` });
         }
-      case 'replay':
-        replayRoom(data,ws);
       default:
         // Pass the message to the room-level handler
         const roomInstance = [...rooms.values()].find(room => room.clients.has(ws));
@@ -351,35 +211,25 @@ function changeScene(sceneName) {
   }
 }
 
-function broadcastToRoom(room, message) {
-  room.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-    }
+async function replayRoom(room) {
+  const actions = await fetchActionAndMessages(room.id);
+  const roomInfo = getRoomInfo(room);
+  actions.forEach((action, index) => {
+      setTimeout(() => {
+          let formattedAction;
+          if (action.type === 'chatMessage') {
+              formattedAction = JSON.stringify({ type: 'chatMessage', data: { message: action.message, timestamp: action.timestamp, user: action.user, id: action.id }, roomInfo: roomInfo });
+          } else {
+              formattedAction = JSON.stringify({ type: action.type, data: action.data, roomInfo: roomInfo });
+          }
+          broadcastToRoom(room, formattedAction);
+      }, 1000 * index); // Delay of 1 second between actions
   });
-}
-
-// Function to send data to the speaker user
-function sendDataToSpeaker(room, data) {
-  if (room.speaker && room.speaker.readyState === WebSocket.OPEN) {
-    room.speaker.send(data);
-  } else {
-    console.error('Speaker not available or connection closed.');
-  }
-}
-
-// Function to send data to the listener user
-function sendDataToListener(room, data) {
-  if (room.listener && room.listener.readyState === WebSocket.OPEN) {
-    room.listener.send(data);
-  } else {
-    console.error('Listener not available or connection closed.');
-  }
 }
 
 module.exports = {
   createRoom,
   joinRoom,
   processMessage,
-  getOpenRooms
+  getOpenRooms,
 };
