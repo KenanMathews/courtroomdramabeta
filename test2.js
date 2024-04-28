@@ -280,7 +280,6 @@ class SceneManager {
         this.sceneNames = [];
         this.currentIndex = 0;
         this.intervalId = null;
-        this.ws = new WebSocket('wss://courtroomdramabeta.onrender.com/'); // Connect to the WebSocket server
         this.setupWebSocketHandlers();
         this.roomName = null;
         this.roomInfo = {};
@@ -389,6 +388,7 @@ class SceneManager {
                     case 'requestTopic':
                         console.log("Topic requested");
                         openModal("Topic", "Enter topic to be discussed:", getTopic, this);
+                        this.loadTopics();
                         break;
                     case 'topicSet':
                         document.getElementById("game-topicName").textContent = `Topic:${data}`
@@ -461,6 +461,21 @@ class SceneManager {
         this.ws.onerror = (error) => {
             console.error('WebSocket error:', error);
         };
+    }
+    loadTopics(){
+        fetch('/topics')
+            .then(response => {
+                if (!response.ok) {
+                throw new Error('Network response was not ok');
+                }
+                return response.json(); 
+            })
+            .then(data => {
+                addTokenFields(data);
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
     }
     handleHolditChatLog(data) {
         this.objectionLog = data; // Property to store objection data
@@ -1533,6 +1548,7 @@ const modal = document.getElementById('modal');
 const modalOverlay = modal.querySelector('.modal-overlay');
 const modalTitle = document.getElementById('modal-title');
 const modalLabel = document.getElementById('modal-label');
+const modalExtra = document.getElementById('modal-extra-info');
 const modalInput = document.getElementById('input');
 const modalSubmit = document.getElementById('modal-submit');
 
@@ -1559,6 +1575,16 @@ function openModal(title, label, callback, other) {
         // Remove the submit event listener to prevent memory leaks
         modalSubmit.removeEventListener('click', submitHandler);
     });
+}
+function updateModalLabelExtra( obj ) {
+    modalExtra.append(obj);
+}
+
+function resetModal(){
+    modalTitle.textContent = '';
+    modalLabel.textContent = '';
+    modalExtra.innerHTML = '';
+
 }
 
 function createRoom(roomName, object) {
@@ -1734,6 +1760,28 @@ function closeAIModal(){
     const aiModal = document.getElementById('ai-modal');
     aiModal.classList.add('hidden');
 }
+function addTokenFields(tokenArray) {
+    const tokenContainer = document.createElement('div');
+    tokenContainer.classList.add('mb-4', 'overflow-x-auto', 'whitespace-nowrap');
+  
+    tokenArray.forEach(token => {
+      const tokenElement = document.createElement('span');
+      tokenElement.textContent = token.topic_name;
+      tokenElement.classList.add('inline-block', 'bg-gray-200', 'rounded-full', 'px-3', 'py-1', 'text-sm', 'font-semibold', 'text-gray-700', 'mr-2', 'mb-2', 'cursor-pointer');
+      tokenElement.addEventListener('mousedown', () => {
+        const input = document.getElementById('input');
+        input.value += (input.value ? ' ' : '') + token.topic_name;
+        tokenElement.remove();
+      });
+      tokenContainer.appendChild(tokenElement);
+    });
+  
+    const tokenWrapper = document.createElement('div');
+    tokenWrapper.classList.add('flex', 'overflow-x-auto');
+    tokenWrapper.appendChild(tokenContainer);
+    updateModalLabelExtra(tokenContainer);
+} 
+
 const sceneManager = new SceneManager();
 sceneManager.loadScenes();
 sceneManager.loadEvents();

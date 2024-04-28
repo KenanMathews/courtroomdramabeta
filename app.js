@@ -1,5 +1,6 @@
 const express = require('express');
 const fs = require('fs');
+const { getTopicsFromDB } = require('./ai');
 const path = require('path');
 const { processMessage, getOpenRooms } = require('./rooms');
 const { loadCharactersAndAnimations } = require('./gameState');
@@ -120,6 +121,9 @@ app.get('/scenes', (req, res) => {
     res.json(sceneData);
 });
 
+app.get('/topics', async (req, res) =>{
+    const topics = await getTopicsFromDB();
+});
 
 // Start the server
 const server = app.listen(PORT, () => {

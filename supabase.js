@@ -1,5 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 const { getPlaybackState } = require('./gameState');
+const { fs } = require('fs');
+const { path } = require('path');
 
 require('dotenv').config();
 
@@ -278,6 +280,62 @@ const findOrCreateBot = async () => {
   }
 };
 
+async function storeTopics(topics) {
+  // Collect all unique topics to insert
+  const uniqueTopics = [...new Set(topics)];
+
+  // Fetch existing topics from the 'topics' table
+  const { data: existingTopics, error: existingError } = await supabase
+      .from('topics')
+      .select('topic_name')
+      .in('topic_name', uniqueTopics);
+
+  if (existingError) {
+      console.error('Error fetching existing topics:', existingError);
+      return;
+  }
+
+  // Filter out existing topics
+  const existingTopicNames = existingTopics.map(topic => topic.topic_name);
+  const newTopics = uniqueTopics.filter(topic => !existingTopicNames.includes(topic));
+
+  // Insert new topics into the 'topics' table
+  if (newTopics.length > 0) {
+      const inserts = newTopics.map(topic => ({ topic_name: topic, connections: 1 }));
+      const { error: insertError } = await supabase.from('topics').insert(inserts);
+      
+      if (insertError) {
+          console.error('Error inserting new topics:', insertError);
+          return;
+      }
+  }
+
+  console.log('Topics stored successfully.');
+}
+
+async function getRandomTopics(numberOfTopics = 15) {
+  const { data: allTopics, error } = await supabase
+      .from('topics')
+      .select('topic_name');
+
+  if (error) {
+      console.error('Error fetching topics:', error);
+      return [];
+  }
+
+  if (!allTopics || allTopics.length === 0) {
+      console.error('No topics found.');
+      return [];
+  }
+
+  // Shuffle the array of topics
+  const shuffledTopics = allTopics.sort(() => Math.random() - 0.5);
+
+  // Return a slice of the shuffled array containing the specified number of topics
+  return shuffledTopics.slice(0, numberOfTopics);
+}
+
+
 
 module.exports = {
   generateUniqueId,
@@ -292,4 +350,6 @@ module.exports = {
   storeAIChatMessage,
   updateAIChatMessage,
   findOrCreateBot,
+  storeTopics,
+  getRandomTopics,
 };

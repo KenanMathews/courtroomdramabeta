@@ -134,31 +134,24 @@
   <div id="modal" class="fixed z-10 inset-0 overflow-y-auto hidden">
     <div class="flex items-center justify-center min-h-screen">
       <div class="modal-overlay fixed inset-0 bg-black opacity-25"></div>
-
+  
       <!-- Modal Content -->
-      <div class="modal-container bg-white w-full md:max-w-md mx-auto rounded
-          shadow-lg z-50 overflow-y-auto">
-        <div class="modal-content py-4 text-left px-6">
+      <div class="modal-container bg-gray-800 w-full md:max-w-xl mx-auto rounded-lg shadow-lg z-50 overflow-y-auto">
+        <div class="modal-content py-6 text-left px-8">
           <!-- Title -->
-          <div class="mb-4">
-            <h1 class="text-2xl font-bold" id="modal-title">Modal Title</h1>
+          <div class="mb-6">
+            <h1 class="text-2xl font-bold text-white" id="modal-title"></h1>
           </div>
-
           <!-- Input Field -->
-          <div class="mb-4">
-            <label for="input" class="block text-gray-700 text-sm font-bold
-                mb-2" id="modal-label"></label>
-            <input id="input" type="text" class="shadow appearance-none border
-                rounded w-full py-2 px-3
-                text-gray-700 leading-tight focus:outline-none
-                focus:shadow-outline" placeholder="Enter something...">
+          <div class="mb-6">
+            <div id="modal-extra-info"></div>
+            <label for="input" class="block text-white text-sm font-bold mb-2" id="modal-label"></label>
+            <input id="input" type="text" class="shadow appearance-none border rounded w-full py-3 px-4 bg-gray-700 text-white leading-tight focus:outline-none focus:shadow-outline" placeholder="Enter something...">
           </div>
-
+  
           <!-- Submit Button -->
           <div class="flex justify-end">
-            <button id="modal-submit" class="bg-blue-500 hover:bg-blue-600
-                text-white font-bold py-2
-                px-4 rounded focus:outline-none focus:shadow-outline">Submit</button>
+            <button id="modal-submit" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Submit</button>
           </div>
         </div>
       </div>
