@@ -1,13 +1,24 @@
 const express = require('express');
 const fs = require('fs');
+const multer = require('multer');
+const { uploadToSupabase } = require('./supabase');
 const { getTopicsFromDB } = require('./ai');
 const path = require('path');
 const { processMessage, getOpenRooms } = require('./rooms');
 const { loadCharactersAndAnimations } = require('./gameState');
+const { getAssetsInMemory }= require('./assetcontrol')
 const WebSocket = require('ws');
+
 
 const app = express();
 const PORT = process.env.PORT || 8001;
+
+const upload = multer({
+  storage: multer.memoryStorage(), // Use memory storage instead of disk storage
+});
+
+const assetsCache = new Map();
+const assetPath = "assets.zip";
 
 // Serve index.html
 app.get('/', (req, res) => {
@@ -19,25 +30,26 @@ app.get('/', (req, res) => {
         }
     });
 });
-  
 
-// Serve image files
-app.get('/assets/*', (req, res) => {
-    const assetPath = req.params[0]; // This will capture the entire subfolder path
-    const filePath = path.join(__dirname, 'assets', assetPath);
-    // res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache the file for 1 hour
 
-    fs.readFile(filePath, (err, data) => {
-        if (err) {
-            res.status(404).send('File not found');
-        } else {
-            // Determine appropriate MIME type based on file extension
-            const contentType = getContentType(filePath);
-            res.setHeader('Content-Type', contentType);
-            res.send(data);
-        }
-    });
-});
+app.get('/assets/:fileName(*)', async (req, res) => {
+    const { fileName } = req.params;
+    try {
+      let assetsDir = assetsCache.get(assetPath);
+      if (!assetsDir) {
+        assetsDir = await getAssetsInMemory(assetPath)
+        assetsCache.set(assetPath, assetsDir);
+      }
+      // Serve the requested file from the assetsDir
+      const fileBuffer = assetsDir[fileName];
+      const contentType = getContentType(fileName);
+      res.setHeader('Content-Type', contentType);
+      res.send(fileBuffer);
+    } catch (err) {
+      console.error(`Error serving ${fileName}:`, err);
+      res.status(500).send('Internal Server Error');
+    }
+  });
 
 // Function to determine MIME type based on file extension
 function getContentType(filePath) {
@@ -72,6 +84,23 @@ app.get('/test2.js', (req, res) => {
         }
     });
 });
+
+app.post('/upload', upload.single('file'), async (req, res) => {
+    // Get the uploaded file from memory
+    const file = req.file;
+    // Check if file is present
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    // if(uploadToSupabase(file)){
+    //     res.json({ message: 'File uploaded and stored in database successfully' });
+    // }else{
+    //     res.json({ message: 'File upload failed' });
+    // }
+    return res.status(400).json({ error: 'Unsupported method' });
+
+  });
+  
 
 // Load the scene data from a JSON file
 let sceneData;
@@ -128,6 +157,12 @@ app.get('/topics', async (req, res) =>{
 
 // Start the server
 const server = app.listen(PORT, () => {
+    assetsDir = getAssetsInMemory(assetPath).then(res => {
+        assetsCache.set(assetPath, res);
+        console.log('Assets loaded from supabase:');
+    }).catch(err => {
+    console.error('Error loading assets:', err);
+    });
     console.log(`Local CORS server running at http://localhost:${PORT}/`);
 });
 

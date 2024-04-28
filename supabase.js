@@ -336,6 +336,41 @@ async function getRandomTopics(numberOfTopics = 15) {
 }
 
 
+async function uploadToSupabase(file){
+    // Upload the file to Supabase storage
+    const { data, error } = await supabase
+    .storage
+    .from('assets')
+    .upload(file.originalname, file.buffer, { 
+      cacheControl: '3600',
+      upsert: false,
+    });
+    if (error) {
+      console.error('Error uploading to db:', error);
+      return false;
+    }
+    if (!data) {
+      console.error('Error storing AI chat message: Data is null');
+      return false;
+    }
+  if (error) {
+    return false;
+  }
+}
+
+async function downloadFromSupabase(fileName){
+  const { data, error } = await supabase
+  .storage
+  .from('assets')
+  .download(fileName);
+
+  if (error) {
+    console.error('Error downloading', error);
+    return;
+  }
+  return data;
+}
+
 
 module.exports = {
   generateUniqueId,
@@ -352,4 +387,6 @@ module.exports = {
   findOrCreateBot,
   storeTopics,
   getRandomTopics,
+  uploadToSupabase,
+  downloadFromSupabase,
 };

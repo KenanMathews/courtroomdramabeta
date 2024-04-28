@@ -280,6 +280,7 @@ class SceneManager {
         this.sceneNames = [];
         this.currentIndex = 0;
         this.intervalId = null;
+        this.ws = new WebSocket('wss://courtroomdramabeta.onrender.com/'); // Connect to the WebSocket server
         this.setupWebSocketHandlers();
         this.roomName = null;
         this.roomInfo = {};
@@ -1781,6 +1782,46 @@ function addTokenFields(tokenArray) {
     tokenWrapper.appendChild(tokenContainer);
     updateModalLabelExtra(tokenContainer);
 } 
+
+function openUploadModal(){
+    const modal = document.getElementById('file-upload-modal');
+    const closeModalBtn = document.getElementById('closeFileModal');
+    const form = document.getElementById('fileUploadForm');
+    const fileInput = document.getElementById('fileInput');
+    const responseDiv = document.getElementById('response');
+
+    modal.classList.remove("hidden");
+
+    closeModalBtn.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const file = fileInput.files[0];
+      if (!file) {
+        responseDiv.textContent = 'No file selected';
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+        responseDiv.textContent = data.message;
+      } catch (error) {
+        responseDiv.textContent = 'Error uploading file';
+        console.error('Error:', error);
+      }
+    });
+}
 
 const sceneManager = new SceneManager();
 sceneManager.loadScenes();
