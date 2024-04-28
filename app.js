@@ -123,6 +123,7 @@ app.get('/scenes', (req, res) => {
 
 app.get('/topics', async (req, res) =>{
     const topics = await getTopicsFromDB();
+    res.json(topics);
 });
 
 // Start the server
