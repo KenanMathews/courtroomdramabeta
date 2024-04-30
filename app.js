@@ -155,40 +155,40 @@ app.get('/topics', async (req, res) =>{
     res.json(topics);
 });
 
-// Start the server
-const server = app.listen(PORT, () => {
-    assetsDir = getAssetsInMemory(assetPath).then(res => {
-        assetsCache.set(assetPath, res);
-        console.log('Assets loaded from supabase:');
-    }).catch(err => {
-    console.error('Error loading assets:', err);
-    });
-    console.log(`Local CORS server running at http://localhost:${PORT}/`);
-});
 
-const wsServer = new WebSocket.Server({ server });
-
-wsServer.on('error', (error) => {
-    console.error('WebSocket server error:', error);
-});
-
-// Handle WebSocket connections
-wsServer.on('connection', (ws,req) => {
-    console.log('WebSocket client connected');
-    // Handle incoming WebSocket messages
-    ws.on('message', async (message) => {
-      try {
-        const response = await processMessage(ws, message);
-        if (response) {
-          ws.send(response);
-        }
-      } catch (error) {
-        console.error('Error processing message:', error);
-      }
+async function startServer() {
+    const assetsDir = await getAssetsInMemory(assetPath);
+    assetsCache.set(assetPath, assetsDir);
+    console.log('Assets loaded from supabase:');
+    const server = app.listen(PORT, () => {
+        console.log(`Local CORS server running at http://localhost:${PORT}/`);
     });
-  
-    // Handle WebSocket connection closure
-    ws.on('close', () => {
-      console.log('WebSocket client disconnected');
+    const wsServer = new WebSocket.Server({ server });
+    
+    wsServer.on('error', (error) => {
+        console.error('WebSocket server error:', error);
     });
-  });
+    
+    // Handle WebSocket connections
+    wsServer.on('connection', (ws,req) => {
+        console.log('WebSocket client connected');
+        // Handle incoming WebSocket messages
+        ws.on('message', async (message) => {
+          try {
+            const response = await processMessage(ws, message);
+            if (response) {
+              ws.send(response);
+            }
+          } catch (error) {
+            console.error('Error processing message:', error);
+          }
+        });
+      
+        // Handle WebSocket connection closure
+        ws.on('close', () => {
+          console.log('WebSocket client disconnected');
+        });
+      });
+}
+
+startServer();
