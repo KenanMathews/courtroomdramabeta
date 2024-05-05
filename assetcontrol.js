@@ -1,6 +1,6 @@
 const AdmZip = require('adm-zip');
 const { downloadFromSupabase } = require('./supabase')
-
+const fs = require('fs');
 
 async function getAssetsInMemory(fileName){
     const data = await downloadFromSupabase(fileName);
@@ -19,14 +19,27 @@ async function getAssetsInMemory(fileName){
 
     return assetsDir;
 }
-async function blobToArrayBuffer(blob) {
-    if (blob.arrayBuffer) {
-        return await blob.arrayBuffer();
-    } else {
-        throw new Error('arrayBuffer method is not available in this environment.');
+
+async function getAssetsInLocalMemory(fileName) {
+    try {
+        const zipBuffer = fs.readFileSync(fileName);
+        const zip = new AdmZip(zipBuffer);
+        const zipEntries = zip.getEntries();
+        const assetsDir = {};
+        zipEntries.forEach((entry) => {
+            const entryName = entry.entryName;
+            if (!entry.isDirectory) {
+                assetsDir[entryName] = entry.getData();
+            }
+        });
+
+        return assetsDir;
+    } catch (error) {
+        throw new Error(`Error loading '${fileName}': ${error.message}`);
     }
 }
 
 module.exports = {
     getAssetsInMemory,
+    getAssetsInLocalMemory,
 };

@@ -6,7 +6,7 @@ const { getTopicsFromDB } = require('./ai');
 const path = require('path');
 const { processMessage, getOpenRooms } = require('./rooms');
 const { loadCharactersAndAnimations } = require('./gameState');
-const { getAssetsInMemory }= require('./assetcontrol')
+const { getAssetsInLocalMemory }= require('./assetcontrol')
 const WebSocket = require('ws');
 
 
@@ -37,7 +37,7 @@ app.get('/assets/:fileName(*)', async (req, res) => {
     try {
       let assetsDir = assetsCache.get(assetPath);
       if (!assetsDir) {
-        assetsDir = await getAssetsInMemory(assetPath)
+        assetsDir = await getAssetsInLocalMemory(assetPath)
         assetsCache.set(assetPath, assetsDir);
       }
       // Serve the requested file from the assetsDir
@@ -157,7 +157,7 @@ app.get('/topics', async (req, res) =>{
 
 
 async function startServer() {
-    const assetsDir = await getAssetsInMemory(assetPath);
+    const assetsDir = await getAssetsInLocalMemory(assetPath);
     assetsCache.set(assetPath, assetsDir);
     console.log('Assets loaded from supabase:');
     const server = app.listen(PORT, () => {
