@@ -29,7 +29,7 @@ commandHandler(client);
 
 client.login(process.env.DISCORD_BOT_ID);
 
-
+const redirect_uri = process.env.DISCORD_REDIRECT_URI;
 
 async function getDiscordAccessToken(code) {
     try {
@@ -38,7 +38,7 @@ async function getDiscordAccessToken(code) {
         client_secret: process.env.DISCORD_CLIENT_SECRET,
         code: code,
         grant_type: 'authorization_code',
-        redirect_uri: "http://localhost:8001/callback",
+        redirect_uri: redirect_uri,
       });
   
       const options = {
@@ -82,7 +82,7 @@ async function getDiscordAccessToken(code) {
  
 function getAuthorizeUrl(){
     const clientId = process.env.DISCORD_CLIENT_ID;
-    const authorizationUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=0&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A8001%2Fcallback&scope=identify+guilds+email+bot+applications.commands+messages.read+dm_channels.read+dm_channels.messages.read`;
+    const authorizationUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=0&response_type=code&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=identify+guilds+email+bot+applications.commands+messages.read+dm_channels.read+dm_channels.messages.read`;
     return authorizationUrl;
 }
 
