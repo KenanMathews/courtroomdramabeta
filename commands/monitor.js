@@ -135,8 +135,8 @@ module.exports = {
 
                 messageCollector.on('end', async () => {
                     // Monitoring ended
-                    let judgeResult = await judgeConversation(messageContext)
-                    interaction.reply(judgeResult);
+                    // let judgeResult = await judgeConversation(messageContext)
+                    // interaction.reply(judgeResult);
                     console.log('Monitoring ended.');
                     messageCollector = null; // Reset messageCollector
                 });
