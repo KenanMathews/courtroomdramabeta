@@ -77,7 +77,44 @@ async function streamTextViaWebSocket(room, aiChatBoxId, botId, prompt, chatLog)
         }
     } 
 }
+async function judgeConversation(conversation) {
+    const anthropic = initializeAnthropic();
 
+    // Split the conversation into individual utterances
+    const utterances = conversation.split("\n");
+  
+    // Initialize scores for each participant
+    const scores = {};
+    let currSpeaker = null;
+  
+    for (const utterance of utterances) {
+      // Determine the speaker
+      if (utterance.endsWith(":")) {
+        currSpeaker = utterance.slice(0, -1);
+        scores[currSpeaker] = 0;
+      } else {
+        // Use Claude to analyze the utterance and update the score
+        const prompt = `Utterance: ${utterance}\n\nAnalyze the utterance and provide a score between 0 and 5 for how effectively the speaker argued their point, considering factors like use of evidence, logical reasoning, and persuasive language. Also provide a brief explanation for the score.`;
+  
+        const response = await anthropic.send({ prompt });
+        const scoreAnalysis = response.result.trim();
+        const [score, explanation] = scoreAnalysis.split("\n");
+        const numericScore = parseInt(score, 10);
+  
+        scores[currSpeaker] += numericScore;
+        console.log(`${currSpeaker}: ${numericScore} (${explanation})`);
+      }
+    }
+  
+    // Determine the winner
+    const winner = Object.entries(scores).reduce(
+      (max, [speaker, score]) =>
+        score > max.score ? { speaker, score } : max,
+      { speaker: null, score: -Infinity }
+    ).speaker;
+  
+    return `\nThe winner of the conversation is: ${winner}`;
+  }
 
 function getSystemPrompt(room){
     const currentUser = room.speaker.user_name;
@@ -136,4 +173,5 @@ async function getTopicsFromDB(){
 module.exports = {
     streamTextViaWebSocket,
     getTopicsFromDB,
+    judgeConversation,
 }
