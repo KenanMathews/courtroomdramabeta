@@ -217,19 +217,46 @@ async function replayRoom(room) {
   actions.forEach((action, index) => {
       setTimeout(() => {
           let formattedAction;
-          if (action.type === 'chatMessage') {
+          if (action.table === 'chat_messages') {
               formattedAction = JSON.stringify({ type: 'chatMessage', data: { message: action.message, timestamp: action.timestamp, user: action.user, id: action.id }, roomInfo: roomInfo });
           } else {
-              formattedAction = JSON.stringify({ type: action.type, data: action.data, roomInfo: roomInfo });
+              formattedAction = JSON.stringify({ type: action.action, data: action.data, roomInfo: roomInfo });
           }
           broadcastToRoom(room, formattedAction);
-      }, 1000 * index); // Delay of 1 second between actions
+      }, 5000 * index); // Delay of 1 second between actions
   });
 }
+
+async function replayRoomByName(roomName, action){
+  if (rooms.has(roomName)) {
+    const room = rooms.get(roomName);
+    let roomInfo = getRoomInfo(room);
+    if (action.table === 'chat_messages') {
+        roomInfo.chatInfo.chatLog.push(action)
+        formattedAction = JSON.stringify({ type: 'chatMessage', data: { message: action.message, timestamp: action.timestamp, user: action.user, id: action.id }, roomInfo: roomInfo });
+    } else {
+        formattedAction = JSON.stringify({ type: action.action, data: action.data, roomInfo: roomInfo });
+    }
+    broadcastToRoom(room, formattedAction);
+  }else{
+    console.log("Room not found");
+  }
+}
+
+function getRoomObj(roomName){
+  if (rooms.has(roomName)) {
+    return rooms.get(roomName);
+  }else{
+    return null;
+  }
+}
+
 
 module.exports = {
   createRoom,
   joinRoom,
   processMessage,
   getOpenRooms,
+  getRoomObj,
+  replayRoomByName,
 };

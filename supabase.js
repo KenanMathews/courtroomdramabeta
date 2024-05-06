@@ -139,8 +139,11 @@ async function fetchActionAndMessages(roomName) {
         .eq('room_id', roomName)
         .order('timestamp', { ascending: true });
   
-      return [...userActions.data, ...chatMessages.data].sort((a, b) => a.timestamp - b.timestamp);
-    } catch (error) {
+        const allData = [...userActions.data.map(action => ({...action, table: 'user_actions'})), ...chatMessages.data.map(message => ({...message, table: 'chat_messages'}))];
+        const sortedData = allData.sort((a, b) => a.timestamp - b.timestamp);
+    
+        return sortedData;
+      } catch (error) {
       console.error('Error fetching actions and messages:', error);
       throw error;
     }

@@ -35,10 +35,10 @@ async function handleObjection(room,userData, messageid) {
     room.audioUrl = '/assets/audio/objection.mp3';
     room.effectUrl = '/assets/audio/pw/objection.wav';
     try {
-      const actionId = await storeUserAction(room.id, userData.userId, 'objection', {id:messageid});
       room.previousObjectionIndex = room.objectionIndex || 0;
       const tempMessage = room.chatInfo.chatLog.find(message => message.id == messageid);
       const objectionData = { type: 'objectionTriggered', data: { userId: userData.userId, userName: userData.name, message: tempMessage }, roomInfo: getRoomInfo(room) };
+      const actionId = await storeUserAction(room.id, userData.userId, 'objectionTriggered', {messageid:messageid, userId: userData.userId, userName: userData.name, message: tempMessage});
       broadcastToRoom(room, JSON.stringify(objectionData));
       broadcastToRoom(room, JSON.stringify({ type: 'showChatBox', roomInfo: getRoomInfo(room) }))
       room.effectUrl = '';
@@ -52,7 +52,7 @@ async function handleObjection(room,userData, messageid) {
     room.audioUrl = '/assets/audio/objection.mp3';
     room.effectUrl = '/assets/audio/pw/holdit.wav';
     try {
-      const actionId = await storeUserAction(room.id, userData.userId, 'holdit', {});
+      const actionId = await storeUserAction(room.id, userData.userId, 'holdItTriggered', {userId: userData.userId, userName: userData.name});
       room.previousObjectionIndex = room.objectionIndex || 0;
       room.objectionIndex = room.chatInfo.chatLog.length;
       const speakerMessages = room.chatInfo.chatLog.slice(room.previousObjectionIndex, room.objectionIndex).filter(message => message.user_id === room.speaker.user_id);
@@ -76,7 +76,7 @@ async function handleObjection(room,userData, messageid) {
       room.listener = tempSpeaker;
       room.side = room.speaker.side;
       
-      const actionId = storeUserAction(room.id, room.speaker.user_id, 'switch_speaker', { newSpeakerId: newSpeaker.user_id });
+      const actionId = storeUserAction(room.id, room.speaker.user_id, 'speakerSwitched', { userName: newSpeaker.user_name, side: room.speaker.side });
       
       broadcastToRoom(room, JSON.stringify({ type: 'speakerSwitched', data: { userName: newSpeaker.user_name, side: room.speaker.side }, roomInfo: getRoomInfo(room) }));
     }
@@ -194,7 +194,7 @@ async function handleObjection(room,userData, messageid) {
   
     room.audioUrl = '/assets/audio/questioning.mp3';
     room.isActive = true;
-    const actionId = await storeUserAction(room.id, user.user_id, 'select_side', { side }); // Storing user action
+    const actionId = await storeUserAction(room.id, user.user_id, 'sideSelected', { side, spriteKey  }); // Storing user action
     broadcastToRoom(room, JSON.stringify({ type: 'sideSelected', data: { side, spriteKey }, name: user.user_name })); // Broadcasting side selection with spriteKey
     broadcastToRoom(room, JSON.stringify({ type: 'showChatBox', roomInfo: getRoomInfo(room) }));
   

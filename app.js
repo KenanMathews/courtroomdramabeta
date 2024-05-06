@@ -8,7 +8,8 @@ const { processMessage, getOpenRooms } = require('./rooms');
 const { loadCharactersAndAnimations } = require('./gameState');
 const { getAssetsInLocalMemory }= require('./assetcontrol')
 const WebSocket = require('ws');
-
+const { getDiscordAccessToken, getAuthorizeUrl } = require("./discordBot")
+require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 8001;
@@ -154,7 +155,38 @@ app.get('/topics', async (req, res) =>{
     const topics = await getTopicsFromDB();
     res.json(topics);
 });
+let accessToken;
+app.get('/callback', async (req, res) => {
+    try {
+        // Extract authorization code from query parameters
+        const code = req.query.code;
+        console.log(code)
+        if (!code) {
+            return res.status(400).send('Authorization code not found.');
+        }
+        const tokenResponse = await getDiscordAccessToken(code);
+        // Handle token response
+        if(tokenResponse){
+            accessToken = tokenResponse.access_token;
+            res.redirect('/');
+        }
+    } catch (error) {
+        console.error('Error handling OAuth2 callback:', error);
+        res.status(500).send('Internal server error');
+    }
+});
 
+// Redirect users to Discord's authorization endpoint
+app.get('/authorize', (req, res) => {
+    res.redirect(getAuthorizeUrl());
+});
+
+app.get('/profile', (req, res) => {
+    if (!accessToken) {
+        return res.status(401).send('Access token not available.');
+    }
+    // Use accessToken for API requests...
+});
 
 async function startServer() {
     const assetsDir = await getAssetsInLocalMemory(assetPath);
