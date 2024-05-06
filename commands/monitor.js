@@ -103,16 +103,20 @@ module.exports = {
                         };
                         monitoredMessages.push(holdItTriggeredObject);
                         replayRoomByName(roomName, holdItTriggeredObject);
-                        const objectionTriggeredObject = {
-                            id: referencedMessage.id,
-                            room_id: referencedMessage.room_id,
-                            user_id: referencedMessage.user_id,
-                            action: 'objectionTriggered',
-                            data: { userId: referencedMessage.user_id, userName: referencedMessage.user, message: referencedMessage },
-                            table: 'user_actions'
-                        };
-                        monitoredMessages.push(objectionTriggeredObject);
-                        replayRoomByName(roomName, objectionTriggeredObject);
+                        
+                        // Adding a timeout between the two replayRoomByName calls
+                        setTimeout(() => {
+                            const objectionTriggeredObject = {
+                                id: referencedMessage.id,
+                                room_id: referencedMessage.room_id,
+                                user_id: referencedMessage.user_id,
+                                action: 'objectionTriggered',
+                                data: { userId: referencedMessage.user_id, userName: referencedMessage.user, message: referencedMessage },
+                                table: 'user_actions'
+                            };
+                            monitoredMessages.push(objectionTriggeredObject);
+                            replayRoomByName(roomName, objectionTriggeredObject);
+                        }, 5000);                         
                     }
                 }
             }
