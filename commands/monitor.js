@@ -1,4 +1,5 @@
-const { replayRoomByName } = require('../rooms');
+const { getRoomInfo } = require('../handleRoomAction');
+const { replayRoomByName, getRoomObj } = require('../rooms');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 
 let messageCollector;
@@ -45,8 +46,9 @@ module.exports = {
 
             // Calculate the start time based on the time frame
             const startTime = currentTime - (timeFrame * 60000); // Convert minutes to milliseconds
+            let room = getRoomObj(roomName)
             let lastUserId = null;
-            let lastSide = 'defence';
+            let lastSide = room.side;
 
             messageCollector = interaction.channel.createMessageCollector({
                 filter: (msg) => {
@@ -134,8 +136,8 @@ module.exports = {
                 console.log('Monitoring ended.');
                 messageCollector = null; // Reset messageCollector
             });
-
-            interaction.reply(`Started monitoring chat in ${roomName} for ${monitoringTime} minutes for selected user ${selectedUser.username} and interaction user ${interactionUser.username}.`);
+            
+            interaction.reply(`${interactionUser.username} has started a debate against${selectedUser.username} on the topic ${room.topic} for ${monitoringTime} minutes in the room ${roomName}.`);
         } else if (!startMonitoring && messageCollector) {
             // Stop monitoring
             messageCollector.stop();
