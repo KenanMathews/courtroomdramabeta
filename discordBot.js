@@ -82,7 +82,7 @@ async function getDiscordAccessToken(code) {
  
 function getAuthorizeUrl(){
     const clientId = process.env.DISCORD_CLIENT_ID;
-    const authorizationUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=0&response_type=code&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=identify+guilds+email+bot+applications.commands+messages.read+dm_channels.read+dm_channels.messages.read`;
+    const authorizationUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=3072&response_type=code&redirect_uri=${encodeURIComponent(redirect_uri)}&scope=guilds+messages.read+bot`;
     return authorizationUrl;
 }
 
