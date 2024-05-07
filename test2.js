@@ -280,7 +280,7 @@ class SceneManager {
         this.sceneNames = [];
         this.currentIndex = 0;
         this.intervalId = null;
-        this.ws = new WebSocket('wss://courtroomdramabeta.onrender.com/'); // Connect to the WebSocket server
+        this.ws = new WebSocket('ws://localhost:8001/'); // Connect to the WebSocket server
         this.setupWebSocketHandlers();
         this.roomName = null;
         this.roomInfo = {};
@@ -448,6 +448,20 @@ class SceneManager {
                         break;
                     case 'generationComplete':
                         this.updateAIChatLog(data.chatLog);
+                        break;
+                    case 'loadingJudgement':
+                        showLoading('Loading judgement...');
+                        break;
+                    case 'judgement':
+                        hideLoading();
+                        const judgeData = {
+                            message: {
+                                message: `The winner of the conversation is ${data.winner}. ${data.explanation}`,
+                                user: "Judge",
+                                timestamp: new Date().getTime()
+                            }
+                        };
+                        showFullScreenAlert(judgeData);
                         break;
                     default:
                         console.log('Unsupported WebSocket message type:', type);

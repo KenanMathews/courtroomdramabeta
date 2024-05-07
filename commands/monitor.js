@@ -1,5 +1,6 @@
 const { replayRoomByName, getRoomObj } = require('../rooms');
 const { judgeConversation } = require('../ai');
+const { broadcastToRoom } = require('../handleRoomAction');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 
 let messageCollector;
@@ -73,7 +74,7 @@ module.exports = {
                         room_name: roomName,
                         table: 'chat_messages'
                     };
-                    messageContext += `${message.author.username}:${message.content}.`
+                    messageContext += `${message.author.username}:${message.content}.\n`
                     if (lastUserId !== message.author.id) {
                         lastSide = lastSide === 'defence' ? 'prosecution' : 'defence';
                         const objectBeforeMessage = {
@@ -134,14 +135,22 @@ module.exports = {
                 });
 
                 messageCollector.on('end', async () => {
+                    broadcastToRoom(room, JSON.stringify({ type: 'loadingJudgement' }));
+                    console.log('Monitoring ended.');
                     // Monitoring ended
-                    // let judgeResult = await judgeConversation(messageContext)
-                    // interaction.reply(judgeResult);
+                    judgeConversation(messageContext)
+                    .then((judgeResult) => {
+                        broadcastToRoom(room, JSON.stringify({ type: 'judgement', data: judgeResult }));
+                        interaction.followUp(`${judgeResult.result}\n${judgeResult.explanation}`);
+                    })
+                    .catch((error) => {
+                      console.error(error);
+                    });
                     console.log('Monitoring ended.');
                     messageCollector = null; // Reset messageCollector
                 });
 
-                interaction.reply(`${interactionUser.username} has started a debate against${selectedUser.username} on the topic ${room.topic} for ${monitoringTime} minutes in the room ${roomName}.`);
+                interaction.reply(`${interactionUser.username} has started a debate against ${selectedUser.username} on the topic ${room.topic} for ${monitoringTime} minutes in the room ${roomName}.`);
             }
 
         } else if (!startMonitoring && messageCollector) {
