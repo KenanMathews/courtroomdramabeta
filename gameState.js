@@ -19,14 +19,18 @@ let isPlaybackInProgress = false;
       if (key.startsWith('character-')) {
         const characterName = asset.characterName;
         const characterAnimations = {};
+        let animationList = []
 
         for (const animationKey in asset.animations) {
           const animationName = animationKey;
+          animationList.push(animationName);
           const animationData = assetsData[asset.animations[animationKey]];
           characterAnimations[animationName] = {
             imageQueue: animationData.imageQueue,
             frameDuration: animationData.frameDuration,
             characterName: animationData.characterName,
+            animationKey: asset.animations[animationKey],
+            characterKey: key
           };
         }
 
@@ -40,6 +44,7 @@ let isPlaybackInProgress = false;
           spriteX: asset.spriteX,
           spriteY: asset.spriteY,
           animations: characterAnimations,
+          animationList
         };
       }
     }

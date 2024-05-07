@@ -1,6 +1,8 @@
 const { storeUserAction,storeChatMessage,createAIChatBox,getAIChatBoxIdFromRoom,storeAIChatMessage,findOrCreateBot, getAIChatLog} = require('./supabase');
 const WebSocket = require('ws');
 const { streamTextViaWebSocket } = require('./ai')
+const { findClosestWord } = require('./analysis')
+const { loadCharactersAndAnimations } = require('./gameState')
 
 
 async function handleRoomAction(room, actionType, data, userData) {
@@ -87,7 +89,7 @@ async function handleObjection(room,userData, messageid) {
     const currentTimeInMinutes = new Date(currentTime.getFullYear(), currentTime.getMonth(), currentTime.getDate(), currentTime.getHours(), currentTime.getMinutes()).getTime();
   
     const messageId = await storeChatMessage(room.id, userData.userId, message, currentTime);
-    
+    randomFunction(loadRandomPose,0.5,room,message,userData);
     if (messageId === null) {
       console.error('Error storing chat message.');
       return;
@@ -106,6 +108,12 @@ async function handleObjection(room,userData, messageid) {
     if (messageId !== null) {
       broadcastToRoom(room, JSON.stringify({ type: 'chatMessage', data: { message, timestamp: currentTime, user: userData.name, id: messageId }, roomInfo: getRoomInfo(room) }));
     }
+  }
+  function loadRandomPose(room,message,userData){
+    const charactersData = loadCharactersAndAnimations();
+    const characterInfo = charactersData[room.speaker.spriteKey];
+    const animationKey = characterInfo.animations[findClosestWord(message,characterInfo.animationList)].animationKey;
+    broadcastToRoom(room, JSON.stringify({ type: 'loadPose', data: { side:userData.side, animation:animationKey, characterKey:userData.spriteKey }, roomInfo: getRoomInfo(room) }));
   }
   function parseChatLog(chatLog) {
     return chatLog.map(message => ({
@@ -253,6 +261,11 @@ function sendDataToSpeaker(room, data) {
       console.error('Listener not available or connection closed.');
     }
   }
+  function randomFunction(func, probability ,...params) {
+    if (Math.random() < probability) {
+        func(...params);
+    }
+}
 module.exports = {
     handleRoomAction,
     broadcastToRoom,
