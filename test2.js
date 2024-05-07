@@ -302,6 +302,18 @@ class SceneManager {
                 this.musicPaused = false;
             }
         });
+        if (window.location.pathname.includes('/joinGame')) {
+            // Get the room name and user name from the URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomName = urlParams.get('room');
+            const userName = urlParams.get('name');
+        
+            // Join the room immediately after creating the WebSocket connection
+            this.ws.addEventListener('open', () => {
+                // Join the room after the WebSocket connection is open
+                this.joinRoom(roomName, userName);
+              });
+          }
 
     }
     createAudioElement(id, autoplay) {
@@ -380,6 +392,10 @@ class SceneManager {
                         hideLoading();
                         console.log(`Joined room "${data}".`);
                         break;
+                    case 'roomNotFound':
+                        document.getElementById('roomManagementLayer').classList.remove('hidden');
+                        alert(data);
+                        break;
                     case 'error':
                         alert(data);
                         break;
@@ -456,12 +472,12 @@ class SceneManager {
                         hideLoading();
                         const judgeData = {
                             message: {
-                                message: `The winner of the conversation is ${data.winner}. ${data.explanation}`,
+                                message: `The winner of the conversation is ${data.winner}.\n ${data.explanation}`,
                                 user: "Judge",
                                 timestamp: new Date().getTime()
                             }
                         };
-                        showFullScreenAlert(judgeData);
+                        showFullScreenAlert(judgeData,15);
                         break;
                     default:
                         console.log('Unsupported WebSocket message type:', type);
@@ -554,7 +570,7 @@ class SceneManager {
     }
     handleObjectionforUsers(data) {
         const isSpeaker = this.roomInfo.users.find(user => user.userId === this.userId && user.isSpeaker);
-        showFullScreenAlert(data);
+        showFullScreenAlert(data,5);
         const objectionBtn = document.getElementById('objectionBtn');
         const holdItBtn = document.getElementById('holdItBtn');
         const oc = document.getElementById('objection-control');
@@ -1490,6 +1506,15 @@ class SceneManager {
             animationContainer.appendChild(previewContainer);
         }
     }
+
+    joinRoom(roomName, userName) {
+        document.getElementById('roomManagementLayer').classList.add('hidden');
+        this.ws.send(JSON.stringify({
+          type: 'joinRoom',
+          roomName: roomName,
+          name: userName
+        }));
+      }
 }
 async function bufferMessage(lastMessage, delay = 30) {
     const novelTextBox = document.getElementById('novelTextBox');
@@ -1643,7 +1668,7 @@ function hideLoading() {
         loadingOverlay.classList.add('hidden');
     }
 }
-function showFullScreenAlert(data) {
+function showFullScreenAlert(data,seconds) {
     let message = data.message;
     var alertDiv = document.getElementById('full-screen-alert');
     var alertMessage = document.getElementById('objection-message');
@@ -1663,7 +1688,7 @@ function showFullScreenAlert(data) {
 
     setTimeout(function () {
         hideFullScreenAlert();
-    }, 5000);
+    }, seconds * 1000);
 }
 
 function hideFullScreenAlert() {

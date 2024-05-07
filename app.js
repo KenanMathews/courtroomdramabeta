@@ -32,6 +32,15 @@ app.get('/', (req, res) => {
     });
 });
 
+app.get('/joinGame', (req, res) => {
+    fs.readFile(path.join(__dirname, 'index.html'), (err, data) => {
+        if (err) {
+            res.status(500).send('Error loading index.html');
+        } else {
+            res.status(200).type('text/html').send(data);
+        }
+    });
+});
 
 app.get('/assets/:fileName(*)', async (req, res) => {
     const { fileName } = req.params;

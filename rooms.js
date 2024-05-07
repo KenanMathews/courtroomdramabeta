@@ -176,7 +176,7 @@ async function processMessage(ws, message) {
         if (response.success) {
           return JSON.stringify({ type: 'roomJoined', data: response.spriteKey, roomInfo: response.roomInfo });
         } else {
-          return JSON.stringify({ type: 'error', data: `Room "${roomName}" not found.` });
+          return JSON.stringify({ type: 'roomNotFound', data: `Room "${roomName}" not found.` });
         }
       default:
         // Pass the message to the room-level handler

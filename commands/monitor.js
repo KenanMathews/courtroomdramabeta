@@ -149,8 +149,14 @@ module.exports = {
                     console.log('Monitoring ended.');
                     messageCollector = null; // Reset messageCollector
                 });
+                // Fetch the User object for the selected user
+                // const user = await interaction.client.users.fetch(selectedUser.id);
 
-                interaction.reply(`${interactionUser.username} has started a debate against ${selectedUser.username} on the topic ${room.topic} for ${monitoringTime} minutes in the room ${roomName}.`);
+                // Send a message directly to the selected user
+                // await user.send({ content: `Monitoring started for ${monitoringTime} minutes in the room ${roomName}.` });
+                const url = `https://courtroomdramabeta.onrender.com/joinGame?room=${roomName}&name=${selectedUser.username}`;
+                interaction.reply(`${interactionUser.username} has started a debate against ${selectedUser.username} on the topic ${room.topic} for ${monitoringTime} minutes in the room ${roomName}.\n ${url}`);
+                
             }
 
         } else if (!startMonitoring && messageCollector) {
