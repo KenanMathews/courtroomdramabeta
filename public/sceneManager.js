@@ -309,7 +309,9 @@ class SceneManager {
     }
     handleSideSelectedWS(data) {
         const courtSideSelectionLayer = document.getElementById('courtSideSelectionLayer');
+        // const textOrSpeechLayer = document.getElementById('textOrSpeechLayer');
         courtSideSelectionLayer.classList.add("hidden");
+        // textOrSpeechLayer.classList.add("hidden");
         this.switchScene(data.side);
         this.loadPosesforChat(data.spriteKey);
     }
@@ -872,32 +874,13 @@ class SceneManager {
         const textInputBtn = document.getElementById('textInputBtn');
         textInputBtn.addEventListener('click', () => {
             this.ws.send(JSON.stringify({ type: 'setMode', data: 0, roomName: this.roomName })); // Send mode 0 for text input
-            handleModeSelection('courtSideSelectionLayer');
         });
 
         // Update speechToTextBtn to send mode 1
         const speechToTextBtn = document.getElementById('speechToTextBtn');
         speechToTextBtn.addEventListener('click', () => {
             this.ws.send(JSON.stringify({ type: 'setMode', data: 1, roomName: this.roomName })); // Send mode 1 for speech to text
-            handleModeSelection('courtSideSelectionLayer');
-
         });
-
-        // Function to handle mode selection and layer visibility
-        function handleModeSelection(selectedLayerId) {
-            const textOrSpeechLayer = document.getElementById('textOrSpeechLayer');
-            const courtSideSelectionLayer = document.getElementById(selectedLayerId);
-
-            // Hide text or speech layer
-            textOrSpeechLayer.classList.add('hidden');
-
-            // Show court side selection layer
-            courtSideSelectionLayer.classList.remove('hidden');
-
-            // Remove event listeners from mode selection buttons
-            textInputBtn.removeEventListener('click', handleModeSelection);
-            speechToTextBtn.removeEventListener('click', handleModeSelection);
-        }
 
         // Add event listeners for defence and prosecution buttons
         const defenceBtn = document.getElementById('defenceBtn');
@@ -1362,7 +1345,8 @@ function createRoom(roomName, object) {
 
 function getTopic(topic, object) {
     document.getElementById('roomManagementLayer').classList.add('hidden');
-    document.getElementById('textOrSpeechLayer').classList.remove('hidden');
+    // document.getElementById('textOrSpeechLayer').classList.remove('hidden');
+    document.getElementById('courtSideSelectionLayer').classList.remove('hidden');
     object.ws.send(JSON.stringify({ type: 'setTopic', data: topic, roomName: object.roomName }));
 }
 
