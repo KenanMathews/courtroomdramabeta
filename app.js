@@ -84,11 +84,29 @@ function getContentType(filePath) {
     }
 }
 
-// Serve test.js
-app.get('/test2.js', (req, res) => {
-    fs.readFile(path.join(__dirname, 'test2.js'), (err, data) => {
+// Serve js
+app.get('/sceneManager.js', (req, res) => {
+    fs.readFile(path.join(__dirname, 'public', 'sceneManager.js'), (err, data) => {
         if (err) {
             res.status(500).send('Error loading test.js');
+        } else {
+            res.status(200).type('application/javascript').send(data);
+        }
+    });
+});
+app.get('/scene.js', (req, res) => {
+    fs.readFile(path.join(__dirname, 'public', 'scene.js'), (err, data) => {
+        if (err) {
+            res.status(500).send('Error loading scene.js');
+        } else {
+            res.status(200).type('application/javascript').send(data);
+        }
+    });
+});
+app.get('/components.js', (req, res) => {
+    fs.readFile(path.join(__dirname, 'public', 'components.js'), (err, data) => {
+        if (err) {
+            res.status(500).send('Error loading components.js');
         } else {
             res.status(200).type('application/javascript').send(data);
         }
