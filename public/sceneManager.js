@@ -119,6 +119,13 @@ class SceneManager {
                         hideLoading();
                         console.log(`Joined room "${data}".`);
                         break;
+                    case 'botJoined':
+                        this.roomName = data;
+                        this.updateSceneWithRoomInfo(roomInfo);
+                        this.loadPosesforChat(data);
+                        hideLoading();
+                        console.log(`Joined room "${data}".`);
+                        break;
                     case 'roomNotFound':
                         document.getElementById('roomManagementLayer').classList.remove('hidden');
                         alert(data);

@@ -151,6 +151,45 @@ async function judgeConversation(conversation) {
     });
 }
 
+async function generateReply(room,botName,user,message) {
+    const anthropic = initializeAnthropic();
+    const topic = room.topic;
+
+    // Construct the prompt
+    const prompt = `There are two people who have entered the courtroom. You are ${botName} who is speaking on the given topic against ${user}. The topic is "${topic}" that has been set.The chat log so far is:
+
+${message}
+
+Based on the given information, provide a concise and persuasive reply as ${botName} for the conversation in 25 words.`;
+
+    const messages = [
+        { role: "user", content: prompt },
+    ];
+
+    const stream = await anthropic.messages.stream({
+        messages,
+        model: "claude-3-opus-20240229",
+        max_tokens: 1000, // Adjust as needed
+        stop_sequences: [],
+    });
+
+    let output = "";
+    stream.on('text', (text) => {
+        output += text;
+    });
+
+    return new Promise((resolve, reject) => {
+        stream.on('end', () => {
+            const reply = output.trim();
+            resolve(reply);
+        });
+
+        stream.on('error', (error) => {
+            reject(error);
+        });
+    });
+}
+
 function getSystemPrompt(room) {
     const currentUser = room.speaker.user_name;
     const topic = room.topic;
@@ -209,4 +248,5 @@ module.exports = {
     streamTextViaWebSocket,
     getTopicsFromDB,
     judgeConversation,
+    generateReply,
 }

@@ -94,7 +94,7 @@ async function joinRoom(roomName, name, ws) {
 
     if (room.clients.size === 1) {
       ws.side = 'defence';
-      ws.spriteKey = ws.side === 'character-phoenixwright';
+      ws.spriteKey = ws.side === 'defence'?'character-phoenixwright':'character-milesedgeworth';
       room.speaker = ws;
     } else if (room.clients.size === 2) {
       if (room.speaker.side) {

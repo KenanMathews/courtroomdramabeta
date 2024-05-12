@@ -1,5 +1,5 @@
 const { replayRoomByName, getRoomObj } = require('../rooms');
-const { judgeConversation } = require('../ai');
+const { judgeConversation, generateReply } = require('../ai');
 const { broadcastToRoom, getRoomInfo } = require('../handleRoomAction');
 const { SlashCommandBuilder } = require('@discordjs/builders');
 const { loadCharactersAndAnimations } = require('../gameState');
@@ -11,13 +11,9 @@ const monitoredMessages = [];
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('monitor')
-        .setDescription('Start, stop, or configure monitoring chat for new messages within a time frame')
-        .addUserOption(option =>
-            option
-                .setName('user')
-                .setDescription('User you are challenging')
-        ).addStringOption(option =>
+        .setName('botbattle')
+        .setDescription('Start, stop, or configure bot battle chat for new messages within a time frame')
+        .addStringOption(option =>
             option
                 .setName('roomname')
                 .setDescription('Name of the room being monitored')
@@ -35,31 +31,25 @@ module.exports = {
         const startMonitoring = interaction.options.getBoolean('start');
         const monitoringTime = interaction.options.getInteger('time');
         const roomName = interaction.options.getString('roomname');
-        const selectedUser = interaction.options.getUser('user');
         const botUserId = interaction.client.user.id;
-
-
-        // Get the user who initiated the command
-        const interactionUser = interaction.user;
-
-        const charactersData = loadCharactersAndAnimations();
+        const botUsername = interaction.client.user.username;
+        let botStarted = false;
+        const missingParams = [];
         if (startMonitoring === null) missingParams.push('start');
         if (!monitoringTime) missingParams.push('time');
         if (!roomName) missingParams.push('roomname');
-        if (!selectedUser) missingParams.push('user');
 
         if (missingParams.length > 0) {
             const missingParamsList = missingParams.join(', ');
             interaction.reply(`Invalid command. Please provide the following parameters: ${missingParamsList}.`);
             return; // Exit the function early if any parameters are missing
         }
+        // Get the user who initiated the command
+        const interactionUser = interaction.user;
 
-        if(selectedUser.id == botUserId){
-            interaction.reply(`Invalid user selected. the bot cannot reply to your challenge. Try /botbattle if you want to converse with bot`);
-            return; // Exit the function early if bot is chosen
-        }
+        const charactersData = loadCharactersAndAnimations();
 
-        if (startMonitoring && !messageCollector && monitoringTime && roomName && selectedUser) {
+        if (startMonitoring && !messageCollector && monitoringTime && roomName) {
             // Start monitoring
             const timeFrame = monitoringTime; // Time frame in minutes
 
@@ -72,18 +62,21 @@ module.exports = {
             if (room) {
                 let lastUserId = null;
                 let lastSide = room.side;
+                ws = {user_name:'DummyUser', user_id:botUserId , send: ()=>{} };
+                ws.side = botSide =  lastSide == 'defence'?'prosecution':'defence';
+                ws.spriteKey = ws.side === 'defence'?'character-phoenixwright':'character-milesedgeworth';
+                room.listener = ws;
+                room.clients.add(ws)
                 let messageContext = '';
 
                 messageCollector = interaction.channel.createMessageCollector({
                     filter: (msg) => {
                         // Check if the message is within the time frame and from either the selected user or the interaction user
-                        return (msg.author.id === selectedUser.id || msg.author.id === interactionUser.id);
+                        return msg.author.id === interactionUser.id && msg.author.id != botUserId;
                     },
                     time: monitoringTime * 60000 // Time to keep collecting messages (in milliseconds)
                 });
-
-                // Function to handle collected messages
-                function handleCollectedMessage(message, currentUser) {
+                async function handleCollectedMessage(message) {
                     // Construct message object in the desired format
                     const messageObject = {
                         id: message.id,
@@ -96,37 +89,13 @@ module.exports = {
                         table: 'chat_messages'
                     };
                     monitoredMessages.push(messageObject);
-                    messageContext += `${message.author.username}:${message.content}.\n`
-                    if (lastUserId && lastUserId !== message.author.id) {
-                        const clientsArray = Array.from(room.clients);
-                        const newSpeaker = clientsArray.find(client => client !== room.speaker);
-                        
-                        if (newSpeaker) {
-                            const tempSpeaker = room.speaker;
-                            room.speaker = newSpeaker;
-                            room.listener = tempSpeaker;
-                            lastSide = room.side = room.speaker.side;
-                            const objectBeforeMessage = {
-                                id: message.id + "switch",
-                                room_id: message.channelId,
-                                user_id: lastUserId,
-                                action: 'speakerSwitched',
-                                data: { userName: message.author.username, side: lastSide },
-                                table: 'user_actions'
-                            };
-                            monitoredMessages.push(objectBeforeMessage);
-                            replayRoomByName(roomName, objectBeforeMessage);
-                        }
-                    }
-                    setTimeout(() => {
-                        lastUserId = message.author.id;
-                        randomFunction(loadPoseForMessage,0.8,message);
-                        replayRoomByName(roomName, messageObject);
-                        // Log the collected message
-                        console.log(`New message collected: ${message.content}`);
-
+                    messageContext += `${message.author.username}:${message.content}.\n`;
+                    lastUserId = message.author.id;
+                    randomFunction(loadPoseForMessage, 0.5, message);
+                    replayRoomByName(roomName, messageObject);                    
+                    setTimeout(async () => {
                         // Check if the message is a reply to the last message sent by the other user
-                        if (message.reference) {
+                        if (message.reference && message.author.id != botUserId) {
                             const referencedMessage = monitoredMessages.find(msg => msg.id === message.reference.messageId);
                             if (referencedMessage) {
                                 const holdItTriggeredObject = {
@@ -155,7 +124,28 @@ module.exports = {
                                 }, 5000);
                             }
                         }
-                    }, 3000);
+                    }, 2000);
+                }
+                function changeSide(username,user_id) {
+                    const clientsArray = Array.from(room.clients);
+                    const newSpeaker = clientsArray.find(client => client !== room.speaker);
+
+                    if (newSpeaker) {
+                        const tempSpeaker = room.speaker;
+                        room.speaker = newSpeaker;
+                        room.listener = tempSpeaker;
+                        lastSide = room.side = room.speaker.side;
+                        const objectBeforeMessage = {
+                            id: "switch",
+                            room_id: room.id,
+                            user_id: user_id,
+                            action: 'speakerSwitched',
+                            data: { userName: username, side: lastSide },
+                            table: 'user_actions'
+                        };
+                        monitoredMessages.push(objectBeforeMessage);
+                        replayRoomByName(roomName, objectBeforeMessage);
+                    }
                 }
                 function randomFunction(func, probability ,...params) {
                     if (Math.random() < probability) {
@@ -168,11 +158,38 @@ module.exports = {
                     broadcastToRoom(room, JSON.stringify({ type: 'loadPose', data: { side:room.speaker.side, animation:animationKey, characterKey:room.speaker.spriteKey }, roomInfo: getRoomInfo(room) }));
 
                 }
-                messageCollector.on('collect', (message) => {
-                    // Determine which user sent the message
-                    const currentUser = message.author.id === selectedUser.id ? 'selectedUser' : 'interactionUser';
+                messageCollector.on('collect', async(message) => {
+
                     // Call the function to handle the collected message
-                    handleCollectedMessage(message, currentUser);
+                    await handleCollectedMessage(message);
+
+                    // Check if the message is from the bot and skip reply for bot
+                    if (message.author.id === botUserId) {
+                        return;
+                    }
+                    // Check if lastUserId is not null before calling changeSide
+                    if (botStarted) {
+                        changeSide(message.author.username, room.speaker.user_id);
+                    }
+                    // Call the desired function here
+                    const reply = await generateReply(room, botUsername, message.author.username, message);
+                    const messageObject = {
+                        id: message.id,
+                        room_id: message.channelId,
+                        user_id: botUserId,
+                        user: botUsername,
+                        message: reply,
+                        timestamp: message.createdTimestamp,
+                        room_name: roomName,
+                        table: 'chat_messages'
+                    };
+                    monitoredMessages.push(messageObject);
+                    messageContext += `${botUsername}:${reply}.\n`;
+                    interaction.channel.send(reply);
+                    lastUserId = botUserId;
+                    botStarted = true;
+                    changeSide(botUsername,lastUserId);
+                    replayRoomByName(roomName, messageObject);
                 });
 
                 messageCollector.on('end', async () => {
@@ -182,7 +199,7 @@ module.exports = {
                     judgeConversation(messageContext)
                         .then((judgeResult) => {
                             broadcastToRoom(room, JSON.stringify({ type: 'judgement', data: judgeResult }));
-                            interaction.followUp(`${judgeResult.result}\n${judgeResult.explanation}`);
+                            interaction.channel.send(`${judgeResult.result}\n${judgeResult.explanation}`);
                         })
                         .catch((error) => {
                             console.error(error);
@@ -190,13 +207,10 @@ module.exports = {
                     console.log('Monitoring ended.');
                     messageCollector = null; // Reset messageCollector
                 });
-                // Fetch the User object for the selected user
-                // const user = await interaction.client.users.fetch(selectedUser.id);
 
-                // Send a message directly to the selected user
-                // await user.send({ content: `Monitoring started for ${monitoringTime} minutes in the room ${roomName}.` });
-                const url = `https://courtroomdramabeta.onrender.com/joinGame?room=${roomName}&name=${selectedUser.username}`;
-                interaction.reply(`${interactionUser.username} has started a debate against ${selectedUser.username} on the topic ${room.topic} for ${monitoringTime} minutes in the room ${roomName}.\n ${url}`);
+                interaction.reply(`${interactionUser.username} has started a debate against ${botUsername} on the topic ${room.topic} for ${monitoringTime} minutes in the room ${roomName}.`);
+                broadcastToRoom(room, JSON.stringify({ type: 'botJoined', data: room.speaker.spriteKey, roomInfo: getRoomInfo(room) }));
+
 
             }
 
