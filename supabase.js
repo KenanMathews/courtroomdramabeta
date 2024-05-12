@@ -338,6 +338,25 @@ async function getRandomTopics(numberOfTopics = 15) {
   return shuffledTopics.slice(0, numberOfTopics);
 }
 
+async function getAllTopics() {
+  const { data: allTopics, error } = await supabase
+    .from('topics')
+    .select('topic_name');
+
+  if (error) {
+    console.error('Error fetching topics:', error);
+    return [];
+  }
+
+  if (!allTopics || allTopics.length === 0) {
+    console.error('No topics found.');
+    return [];
+  }
+
+  // Return the array of topic names
+  return allTopics.map(topic => topic.topic_name);
+}
+
 
 async function uploadToSupabase(file){
     // Upload the file to Supabase storage
@@ -392,4 +411,5 @@ module.exports = {
   getRandomTopics,
   uploadToSupabase,
   downloadFromSupabase,
+  getAllTopics,
 };

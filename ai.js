@@ -1,5 +1,5 @@
 const Anthropic = require('@anthropic-ai/sdk');
-const { storeAIChatMessage, updateAIChatMessage, getRandomTopics, storeTopics } = require('./supabase')
+const { storeAIChatMessage, updateAIChatMessage, getRandomTopics, storeTopics, getAllTopics } = require('./supabase')
 require('dotenv').config();
 const jb = require('json-buffer');
 const readline = require("readline");
@@ -160,7 +160,7 @@ async function generateReply(room,botName,user,message) {
 
 ${message}
 
-Based on the given information, provide a concise and persuasive reply as ${botName} for the conversation in 25 words.`;
+Based on the given information, provide a concise and persuasive reply as ${botName} for the conversation in around 25-35 words.`;
 
     const messages = [
         { role: "user", content: prompt },
@@ -198,9 +198,12 @@ function getSystemPrompt(room) {
     return `There are two people who have entered the courtroom.You are assisting ${currentUser} with talking points to the arguments he needs. The topic is ${topic} that has been set. The side you are on is the ${side} and the chat log so far is: ${chatInfo.chatLog}. Give me short and concise answers if possible and you can make up information as you go.`
 }
 
-async function getTopicsForRoom() {
+async function getTopicsForRoom(topics=null) {
     const anthropic = initializeAnthropic();
-    const prompt = 'I need 15 topics for a debate about general knowledge/funny topics formatted as json in format["Topic 1","Topic 2",.....]';
+    let prompt = 'I need 15 unique topics for a debate about general knowledge/funny topics formatted as json in format["Topic 1","Topic 2",.....]';
+    if(topics){
+        prompt += `Skip the following topics in the generated list which I already have in the list provided after this.${topics}`;
+    }
     let output = '';
     let messages = [{ "role": "user", "content": prompt }];
 
@@ -244,9 +247,17 @@ async function getTopicsFromDB() {
     }
     return topics;
 }
+
+async function generateMoreTopicsForDB() {
+    let old_topics = await getAllTopics();
+    let topics = await getTopicsForRoom(old_topics);
+    storeTopics(topics);
+    return topics;
+}
 module.exports = {
     streamTextViaWebSocket,
     getTopicsFromDB,
     judgeConversation,
     generateReply,
+    generateMoreTopicsForDB,
 }
