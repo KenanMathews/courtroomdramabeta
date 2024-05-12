@@ -123,6 +123,8 @@ class SceneManager {
                         this.roomName = data;
                         this.updateSceneWithRoomInfo(roomInfo);
                         this.loadPosesforChat(data);
+                        const chatInput = document.getElementById('chat-input');
+                        chatInput.parentElement.classList.add("hidden")
                         hideLoading();
                         console.log(`Joined room "${data}".`);
                         break;
