@@ -51,7 +51,7 @@ async function createRoom(roomName, name, ws) {
       room.isActive = false;
       broadcastToRoom(room, JSON.stringify({ type: "error", data: `${ws.user_name} has disconnected` }));
       room.clients.delete(ws);
-      if (room.clients.size === 0) {
+      if (room.clients.size === 0 || room.is_bot_battle) {
         console.log(`Room ${roomName} has no more clients. Deleting room.`);
         rooms.delete(roomName);
       }

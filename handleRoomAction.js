@@ -62,6 +62,7 @@ async function handleObjection(room,userData, messageid) {
       sendDataToListener(room, JSON.stringify(speakerMessagesData));
       const holditData = { type: 'holdItTriggered', data: { userId: userData.userId, userName: userData.name }, roomInfo: getRoomInfo(room) };
       broadcastToRoom(room, JSON.stringify(holditData));
+      return actionId;
     } catch (error) {
       console.error('Error handling objection:', error);
     }
@@ -108,6 +109,7 @@ async function handleObjection(room,userData, messageid) {
     if (messageId !== null) {
       broadcastToRoom(room, JSON.stringify({ type: 'chatMessage', data: { message, timestamp: currentTime, user: userData.name, id: messageId }, roomInfo: getRoomInfo(room) }));
     }
+    return messageId;
   }
   function loadRandomPose(room,message,userData){
     const charactersData = loadCharactersAndAnimations();
@@ -268,6 +270,9 @@ function sendDataToSpeaker(room, data) {
 }
 module.exports = {
     handleRoomAction,
+    handleChatMessage,
+    handleObjection,
+    handleHoldIt,
     broadcastToRoom,
     getRoomInfo,
     sendDataToSpeaker,
